@@ -14,18 +14,18 @@ async function token(): Promise<string> {
   const result = await client().acquireTokenByClientCredential({ scopes: ["https://graph.microsoft.com/.default"] });
   if (!result?.accessToken) throw new Error("GRAPH_AUTH_FAILED"); return result.accessToken;
 }
-async function getJson<T>(url: string, accessToken: string): Promise<T> {
+async function getJson<T>(url: string, accessToken: string, operation = "REQUEST"): Promise<T> {
   const parsed = new URL(url);
   if (parsed.origin !== "https://graph.microsoft.com" || !parsed.pathname.startsWith("/v1.0/")) throw new Error("GRAPH_URL_REJECTED");
   const response = await fetch(parsed, { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json", ConsistencyLevel: "eventual" }, cache: "no-store", signal: AbortSignal.timeout(12000) });
-  if (!response.ok) throw new Error(`GRAPH_${response.status}`);
+  if (!response.ok) throw new Error(`GRAPH_${operation}_${response.status}`);
   return response.json() as Promise<T>;
 }
-async function collect<T>(url: string, accessToken: string, maximumPages = 50): Promise<T[]> {
+async function collect<T>(url: string, accessToken: string, maximumPages = 50, operation = "LIST"): Promise<T[]> {
   const results: T[] = []; let next: string | undefined = url; let pages = 0;
   while (next) {
     if (++pages > maximumPages) throw new Error("GRAPH_RESULT_LIMIT");
-    const page: GraphPage<T> = await getJson<GraphPage<T>>(next, accessToken);
+    const page: GraphPage<T> = await getJson<GraphPage<T>>(next, accessToken, operation);
     if (!Array.isArray(page.value)) throw new Error("GRAPH_RESULT_INVALID");
     results.push(...page.value); if (results.length > 10000) throw new Error("GRAPH_RESULT_LIMIT");
     next = page["@odata.nextLink"];
@@ -41,7 +41,7 @@ function graphUrl(path: string, params?: Record<string, string>): string {
 export async function findUniqueMobileMatch(mobile: string): Promise<{ user: GraphUser | null; reason: string }> {
   const config = getDemoConfig(); if (!config) throw new Error("CONFIG_INVALID");
   const accessToken = await token(); const escaped = mobile.replaceAll("'", "''");
-  const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100" }), accessToken, 3);
+  const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100" }), accessToken, 3, "USER_LOOKUP");
   const exactMatches = users.filter((user) => user.mobilePhone === mobile);
   return exactMatches.length === 1 ? { user: exactMatches[0], reason: "MATCHED" } : { user: null, reason: exactMatches.length ? "AMBIGUOUS_MATCH" : "NO_MATCH" };
 }
@@ -64,7 +64,7 @@ export async function checkRequiredDemoPermissions(): Promise<void> {
   const requiredRoles = ["User.Read.All", "UserAuthMethod-TAP.ReadWrite.All", "Policy.Read.AuthenticationMethod", "RoleManagement.Read.Directory", "RoleEligibilitySchedule.Read.Directory"];
   if (claims.tid?.toLowerCase() !== config.tenantId.toLowerCase() || !claims.aud || !graphAudiences.has(claims.aud) || !claims.exp || claims.exp * 1000 <= Date.now() || !requiredRoles.every((role) => claims.roles?.includes(role))) throw new Error("GRAPH_PERMISSION_MISSING");
   const userId = [...config.allowedUserIds][0];
-  const user = await getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id" }), result.accessToken);
+  const user = await getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id" }), result.accessToken, "CONSENT_USER_CHECK");
   if (user.id.toLowerCase() !== userId.toLowerCase()) throw new Error("GRAPH_USER_CHECK_FAILED");
 }
 
@@ -73,7 +73,7 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
   if (!config || !config.allowedUserIds.has(user.id.toLowerCase())) return false;
   if (user.accountEnabled !== true || user.userType !== "Member" || !user.userPrincipalName) return false;
   const accessToken = await token();
-  const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999", "$count": "true" }), accessToken);
+  const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999", "$count": "true" }), accessToken, 50, "GROUP_MEMBERSHIP");
   const groupIds = new Set(groups.flatMap(({ id }) => id ? [id.toLowerCase()] : []));
   if (!groupIds.has(config.allowedGroupId.toLowerCase())) return false;
 
@@ -81,7 +81,7 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
     state?: string; minimumLifetimeInMinutes?: number; maximumLifetimeInMinutes?: number;
     includeTargets?: Array<{ id?: string; targetType?: string }>;
     excludeTargets?: Array<{ id?: string; targetType?: string }>;
-  }>(graphUrl("policies/authenticationMethodsPolicy/authenticationMethodConfigurations/TemporaryAccessPass"), accessToken);
+  }>(graphUrl("policies/authenticationMethodsPolicy/authenticationMethodConfigurations/temporaryAccessPass"), accessToken, "TAP_POLICY");
   if (policy.state !== "enabled" || policy.minimumLifetimeInMinutes == null || policy.maximumLifetimeInMinutes == null) return false;
   if (LIFETIME_MINUTES < policy.minimumLifetimeInMinutes || LIFETIME_MINUTES > policy.maximumLifetimeInMinutes) return false;
   const principals = new Set([user.id.toLowerCase(), ...groupIds]);
@@ -91,9 +91,9 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
   if (!isIncluded || isExcluded) return false;
 
   // Fail closed for active or PIM-eligible directory roles, whether assigned to the user or a group.
-  const assignments = await collect<{ principalId?: string }>(graphUrl("roleManagement/directory/roleAssignments", { "$select": "principalId", "$top": "999" }), accessToken);
+  const assignments = await collect<{ principalId?: string }>(graphUrl("roleManagement/directory/roleAssignments", { "$select": "principalId" }), accessToken, 50, "ROLE_ASSIGNMENTS");
   if (assignments.some((role) => role.principalId && principals.has(role.principalId.toLowerCase()))) return false;
-  const eligible = await collect<{ principalId?: string; startDateTime?: string; endDateTime?: string }>(graphUrl("roleManagement/directory/roleEligibilityScheduleInstances", { "$select": "principalId,startDateTime,endDateTime", "$top": "999" }), accessToken);
+  const eligible = await collect<{ principalId?: string; startDateTime?: string; endDateTime?: string }>(graphUrl("roleManagement/directory/roleEligibilityScheduleInstances", { "$select": "principalId,startDateTime,endDateTime" }), accessToken, 50, "ROLE_ELIGIBILITY");
   const now = Date.now();
   if (eligible.some((role) => role.principalId && principals.has(role.principalId.toLowerCase()) && (!role.startDateTime || Date.parse(role.startDateTime) <= now) && (!role.endDateTime || Date.parse(role.endDateTime) > now))) return false;
   return true;
