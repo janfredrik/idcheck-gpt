@@ -41,7 +41,7 @@ function graphUrl(path: string, params?: Record<string, string>): string {
 export async function findUniqueMobileMatch(mobile: string): Promise<{ user: GraphUser | null; reason: string }> {
   const config = getDemoConfig(); if (!config) throw new Error("CONFIG_INVALID");
   const accessToken = await token(); const escaped = mobile.replaceAll("'", "''");
-  const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100" }), accessToken, 3, "USER_LOOKUP");
+  const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100", "$count": "true" }), accessToken, 3, "USER_LOOKUP");
   const exactMatches = users.filter((user) => user.mobilePhone === mobile);
   return exactMatches.length === 1 ? { user: exactMatches[0], reason: "MATCHED" } : { user: null, reason: exactMatches.length ? "AMBIGUOUS_MATCH" : "NO_MATCH" };
 }
