@@ -214,6 +214,11 @@ Automatiserte tester bruker Graph-dobler. Reelle Graph-skriveoperasjoner kjøres
 - Varslingsadresse og SMTP-oppsett.
 - GitHub-repo og ønsket synlighet for GHCR-imaget.
 
+## Forbedringspotensial etter demo
+
+- **Passkey-oppsett direkte på mobil:** Erstatt eller suppler nettleserveiledningen for Authenticator med en veiledning som viser hvordan brukeren registrerer en passkey direkte i Microsoft Authenticator-appen på mobilen, ved hjelp av TAP. Verifiser flyten mot demotenantens TAP-, autentiseringsmetode- og Conditional Access-policyer.
+- **Kortere TAP-side:** Fjern teksten «Hvis du ikke ba om den, kontakt IT-avdelingen.» fra siden som viser engangskoden. Eventuell sikkerhetsbeskjed skal vurderes separat fra selve TAP-visningen.
+
 ## Dokumentasjonsgrunnlag
 
 - Microsoft Graph TAP-opprettelse: https://learn.microsoft.com/en-us/graph/api/authentication-post-temporaryaccesspassmethods?view=graph-rest-1.0

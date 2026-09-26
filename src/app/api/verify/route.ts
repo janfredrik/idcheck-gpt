@@ -7,7 +7,7 @@ import { genericFailure, hashForRateLimit, maskUpn, noStore, normalizeNorwegianM
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-const fail = (message = genericFailure) => noStore(NextResponse.json({ ok: false, message }));
+const fail = (message = genericFailure, reference?: string) => noStore(NextResponse.json({ ok: false, message, ...(reference ? { reference } : {}) }));
 
 export async function POST(request: NextRequest) {
   if (!requireSameOrigin(request)) return fail();
@@ -21,22 +21,22 @@ export async function POST(request: NextRequest) {
     const attempt = await consumeSimulation({ tokenHash: sha256(body.attemptToken), tenantId: body.tenantId, phoneHash: hashForRateLimit(mobile ?? body.mobile.trim()), decision: String(body.decision), recipient: config.alertEmail });
     if (!attempt) return fail();
     attemptId = attempt.id;
-    if (!attempt.approved) return fail();
-    if (!mobile || body.tenantId.toLowerCase() !== config.tenantId.toLowerCase()) { await finishAttempt(attemptId, "rejected", "INVALID_FLOW_INPUT"); return fail(); }
+    if (!attempt.approved) return fail(genericFailure, attemptId);
+    if (!mobile || body.tenantId.toLowerCase() !== config.tenantId.toLowerCase()) { await finishAttempt(attemptId, "rejected", "INVALID_FLOW_INPUT"); return fail(genericFailure, attemptId); }
 
     const match = await findUniqueMobileMatch(mobile);
     const user = match.user;
-    if (!user) { await finishAttempt(attemptId, "rejected", match.reason); return fail(); }
-    if (!config.allowedUserIds.has(user.id.toLowerCase())) { await finishAttempt(attemptId, "rejected", "ACCOUNT_NOT_ALLOWLISTED"); return fail(); }
-    if (!(await isEligibleForDemo(user))) { await finishAttempt(attemptId, "rejected", "ACCOUNT_NOT_ELIGIBLE"); return fail(); }
+    if (!user) { await finishAttempt(attemptId, "rejected", match.reason); return fail(genericFailure, attemptId); }
+    if (!config.allowedUserIds.has(user.id.toLowerCase())) { await finishAttempt(attemptId, "rejected", "ACCOUNT_NOT_ALLOWLISTED"); return fail(genericFailure, attemptId); }
+    if (!(await isEligibleForDemo(user))) { await finishAttempt(attemptId, "rejected", "ACCOUNT_NOT_ELIGIBLE"); return fail(genericFailure, attemptId); }
     const sessionToken = randomToken(); const csrf = randomToken();
     await pool().query("INSERT INTO flow_sessions (token_hash,csrf_hash,tenant_id,user_id,attempt_id,status,expires_at) VALUES ($1,$2,$3,$4,$5,'verified',now()+($6 * interval '1 minute'))", [sha256(sessionToken), sha256(csrf), config.tenantId, user.id, attemptId, SESSION_MINUTES]);
     await finishAttempt(attemptId, "verified");
-    const response = noStore(NextResponse.json({ ok: true, account: maskUpn(user.userPrincipalName!), csrf, expiresInSeconds: SESSION_MINUTES * 60 }));
+    const response = noStore(NextResponse.json({ ok: true, account: maskUpn(user.userPrincipalName!), csrf, expiresInSeconds: SESSION_MINUTES * 60, reference: attemptId }));
     setSessionCookie(response, sessionToken, SESSION_MINUTES * 60);
     return response;
   } catch (error) {
     if (attemptId) await finishAttempt(attemptId, "unknown", error instanceof Error ? error.message : "INTERNAL_ERROR").catch(() => undefined);
-    return fail();
+    return fail(genericFailure, attemptId);
   }
 }

@@ -5,7 +5,7 @@ import { hashForRateLimit, genericFailure, noStore, normalizeNorwegianMobile, ra
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-const fail = () => noStore(NextResponse.json({ ok: false, message: genericFailure }));
+const fail = (reference?: string) => noStore(NextResponse.json({ ok: false, message: genericFailure, ...(reference ? { reference } : {}) }));
 
 export async function POST(request: NextRequest) {
   if (!requireSameOrigin(request)) return fail();
@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
   try {
     const attempt = await beginAttempt({ tenantId: config.tenantId, phoneHash: hashForRateLimit(normalized ?? body.mobile.trim()), ipHash: hashForRateLimit(`ip:${requestIp(request)}`), simulationTokenHash: sha256(token), recipient: config.alertEmail });
     attemptId = attempt.id;
-    if (!attempt.allowed) return fail();
+    if (!attempt.allowed) return fail(attempt.id);
     if (body.tenantId.toLowerCase() !== config.tenantId.toLowerCase()) {
-      await finishAttempt(attempt.id, "rejected", "TENANT_MISMATCH"); return fail();
+      await finishAttempt(attempt.id, "rejected", "TENANT_MISMATCH"); return fail(attempt.id);
     }
-    if (!normalized) { await finishAttempt(attempt.id, "rejected", "INVALID_MOBILE"); return fail(); }
-    return noStore(NextResponse.json({ ok: true, attemptToken: token, expiresInSeconds: 300 }));
+    if (!normalized) { await finishAttempt(attempt.id, "rejected", "INVALID_MOBILE"); return fail(attempt.id); }
+    return noStore(NextResponse.json({ ok: true, attemptToken: token, expiresInSeconds: 300, reference: attempt.id }));
   } catch {
     if (attemptId) await finishAttempt(attemptId, "unknown", "START_FAILED").catch(() => undefined);
-    return fail();
+    return fail(attemptId);
   }
 }

@@ -8,7 +8,7 @@ import { clearSessionCookie, genericFailure, hashForRateLimit, noStore, normaliz
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 type SessionRow = { token_hash: string; csrf_hash: string; tenant_id: string; user_id: string; attempt_id: string; status: string; expires_at: Date };
-const fail = () => noStore(NextResponse.json({ ok: false, message: genericFailure }));
+const fail = (reference?: string) => noStore(NextResponse.json({ ok: false, message: genericFailure, ...(reference ? { reference } : {}) }));
 
 export async function POST(request: NextRequest) {
   if (!requireSameOrigin(request)) return fail();
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return { ...result, userEmail: user.mail ?? null };
     });
     const emailNoticeQueued = await finishAttempt(claimed.attempt_id, "issued", undefined, issued.userEmail);
-    const response = noStore(NextResponse.json({ ok: true, tap: issued.tap, expiresAt: issued.expiresAt, emailNoticeQueued }));
+    const response = noStore(NextResponse.json({ ok: true, tap: issued.tap, expiresAt: issued.expiresAt, emailNoticeQueued, reference: claimed.attempt_id }));
     clearSessionCookie(response);
     return response;
   } catch (error) {
@@ -49,6 +49,6 @@ export async function POST(request: NextRequest) {
     const finalState = ["TARGET_NOT_ELIGIBLE", "MATCH_ATTRIBUTE_CHANGED", "ACTIVE_TAP_EXISTS"].includes(code) ? "rejected" : "unknown";
     await pool().query("UPDATE flow_sessions SET status=$2 WHERE token_hash=$1", [claimed.token_hash, finalState]).catch(() => undefined);
     await finishAttempt(claimed.attempt_id, finalState, code).catch(() => undefined);
-    const response = fail(); clearSessionCookie(response); return response;
+    const response = fail(claimed.attempt_id); clearSessionCookie(response); return response;
   }
 }

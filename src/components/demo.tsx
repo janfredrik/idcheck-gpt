@@ -53,6 +53,7 @@ export function Demo() {
   const [notice, setNotice] = useState("");
   const [guideStep, setGuideStep] = useState(0);
   const [emailNoticeQueued, setEmailNoticeQueued] = useState(false);
+  const [reference, setReference] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -87,12 +88,12 @@ export function Demo() {
 
   async function beginFlow() {
     if (!tenant || busy) return;
-    setBusy(true); setNotice("");
+    setBusy(true); setNotice(""); setReference("");
     try {
       const response = await fetch("/api/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenantId: tenant.id, mobile }), cache: "no-store" });
       const result = await response.json();
-      if (!result.ok) { setNotice(genericError); setPhase("failed"); return; }
-      setAttemptToken(result.attemptToken); setPhase("waiting");
+      if (!result.ok) { setReference(typeof result.reference === "string" ? result.reference : ""); setNotice(genericError); setPhase("failed"); return; }
+      setReference(typeof result.reference === "string" ? result.reference : ""); setAttemptToken(result.attemptToken); setPhase("waiting");
     } catch { setNotice(genericError); setPhase("failed"); }
     finally { setBusy(false); }
   }
@@ -106,8 +107,8 @@ export function Demo() {
         body: JSON.stringify({ tenantId: tenant.id, mobile, decision, attemptToken }), cache: "no-store"
       });
       const result = await response.json();
-      if (result.ok) { setAccount(result.account); setCsrf(result.csrf); setPhase("eligible"); }
-      else { setAttemptToken(""); setNotice(genericError); setPhase("failed"); }
+      if (result.ok) { setReference(typeof result.reference === "string" ? result.reference : reference); setAccount(result.account); setCsrf(result.csrf); setPhase("eligible"); }
+      else { setReference(typeof result.reference === "string" ? result.reference : reference); setAttemptToken(""); setNotice(genericError); setPhase("failed"); }
     } catch { setAttemptToken(""); setNotice(genericError); setPhase("failed"); }
     finally { setBusy(false); }
   }
@@ -118,14 +119,14 @@ export function Demo() {
     try {
       const response = await fetch("/api/tap", { method: "POST", headers: { "X-CSRF-Token": csrf }, cache: "no-store" });
       const result = await response.json();
-      if (!result.ok) { setNotice(genericError); setPhase("failed"); setCsrf(""); return; }
-      setTap(result.tap); setExpiresAt(Date.parse(result.expiresAt)); setEmailNoticeQueued(result.emailNoticeQueued === true); setPhase("tap");
+      if (!result.ok) { setReference(typeof result.reference === "string" ? result.reference : reference); setNotice(genericError); setPhase("failed"); setCsrf(""); return; }
+      setReference(typeof result.reference === "string" ? result.reference : reference); setTap(result.tap); setExpiresAt(Date.parse(result.expiresAt)); setEmailNoticeQueued(result.emailNoticeQueued === true); setPhase("tap");
     } catch { setNotice(genericError); setPhase("failed"); setCsrf(""); }
     finally { setBusy(false); }
   }
 
   async function closeFlow() {
-    setTap(""); setCsrf(""); setMobile(""); setAccount(""); setNotice(""); setTenant(null); setSearch(""); setGuideStep(0); setEmailNoticeQueued(false);
+    setTap(""); setCsrf(""); setMobile(""); setAccount(""); setNotice(""); setTenant(null); setSearch(""); setGuideStep(0); setEmailNoticeQueued(false); setReference("");
     await fetch("/api/session", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attemptToken }), cache: "no-store" }).catch(() => undefined);
     setAttemptToken("");
     setPhase(tenants.length ? "form" : "setup");
@@ -185,7 +186,6 @@ export function Demo() {
 
               {phase === "form" ? <>
                 <button className="primary-button" type="button" disabled={!tenant || !mobile.trim() || busy} onClick={beginFlow}>{busy ? "Starter forespørsel …" : "Fortsett med Vipps"} <span aria-hidden="true">→</span></button>
-                <p className="form-footnote">Mobilnummeret sammenlignes med nummeret som er registrert på kontoen.</p>
               </> : <div className="simulation-panel">
                 <div className="waiting-header"><span className="spinner" /><div><strong>Venter på bekreftelse i Vipps</strong><span>Demo: ingen Vipps-forespørsel er sendt.</span></div></div>
                 {!simulationReady ? <p className="simulation-hint">Klargjør demosvar …</p> : <>
@@ -199,17 +199,15 @@ export function Demo() {
             <aside className="form-side" aria-label="Om gjenopprettingen">
               <div className="side-illustration" aria-hidden="true"><span className="orbit orbit-a" /><span className="orbit orbit-b" /><div className="shield-art"><b>✓</b></div><span className="spark spark-a">✦</span><span className="spark spark-b">✦</span></div>
               <div className="side-caption"><span className="side-number">01</span><div><strong>Trygg vei tilbake</strong><p>Du bekrefter identiteten med Vipps før en engangskode kan opprettes.</p></div></div>
-              <div className="side-status"><span className="status-dot" /> Kun demotenant · ekte TAP</div>
             </aside>
           </div>}
 
-          {phase === "failed" && <div className="simple-state result-block error-block"><div className="result-icon error-icon">!</div><h2>Vi fikk ikke bekreftet deg</h2><p>{notice || genericError}</p><button className="primary-button" type="button" onClick={closeFlow}>Prøv igjen <span aria-hidden="true">→</span></button></div>}
+          {phase === "failed" && <div className="simple-state result-block error-block"><div className="result-icon error-icon">!</div><h2>Vi fikk ikke bekreftet deg</h2><p>{notice || genericError}</p>{reference && <p className="error-reference">Referanse: <code>{reference}</code></p>}<button className="primary-button" type="button" onClick={closeFlow}>Prøv igjen <span aria-hidden="true">→</span></button></div>}
 
           {phase === "eligible" && <div className="simple-state eligible-state">
             <div className="result-icon success-icon">✓</div><h2>Identiteten er bekreftet</h2>
             <p>Du kan opprette en engangskode for denne kontoen.</p>
             <div className="account-preview"><span className="avatar">{account.charAt(0).toUpperCase()}</span><div><small>BRUKERKONTO</small><strong>{account}</strong></div><span className="verified-mark">✓</span></div>
-            <div className="real-tap-notice"><span>!</span><p><strong>Ekte engangskode i demotenant</strong><br />Bruk kun med en godkjent testkonto.</p></div>
             <button className="primary-button" type="button" disabled={busy} onClick={issueTap}>{busy ? "Oppretter kode …" : "Lag engangskode"}<span aria-hidden="true">→</span></button>
             <button className="text-button" type="button" onClick={closeFlow}>Avbryt</button>
           </div>}
