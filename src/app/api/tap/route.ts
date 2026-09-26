@@ -8,7 +8,7 @@ import { clearSessionCookie, genericFailure, hashForRateLimit, noStore, normaliz
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 type SessionRow = { token_hash: string; csrf_hash: string; tenant_id: string; user_id: string; attempt_id: string; status: string; expires_at: Date };
-const fail = (reference?: string) => noStore(NextResponse.json({ ok: false, message: genericFailure, ...(reference ? { reference } : {}) }));
+const fail = (reference?: string, message = genericFailure) => noStore(NextResponse.json({ ok: false, message, ...(reference ? { reference } : {}) }));
 
 export async function POST(request: NextRequest) {
   if (!requireSameOrigin(request)) return fail();
@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
     const finalState = ["TARGET_NOT_ELIGIBLE", "MATCH_ATTRIBUTE_CHANGED", "ACTIVE_TAP_EXISTS"].includes(code) ? "rejected" : "unknown";
     await pool().query("UPDATE flow_sessions SET status=$2 WHERE token_hash=$1", [claimed.token_hash, finalState]).catch(() => undefined);
     await finishAttempt(claimed.attempt_id, finalState, code).catch(() => undefined);
-    const response = fail(claimed.attempt_id); clearSessionCookie(response); return response;
+    const message = code === "ACTIVE_TAP_EXISTS"
+      ? "Det finnes allerede en aktiv engangskode for kontoen. Bruk den hvis du har den. Hvis ikke, kontakt IT for hjelp."
+      : genericFailure;
+    const response = fail(claimed.attempt_id, message); clearSessionCookie(response); return response;
   }
 }

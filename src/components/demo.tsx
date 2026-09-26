@@ -119,7 +119,7 @@ export function Demo() {
     try {
       const response = await fetch("/api/tap", { method: "POST", headers: { "X-CSRF-Token": csrf }, cache: "no-store" });
       const result = await response.json();
-      if (!result.ok) { setReference(typeof result.reference === "string" ? result.reference : reference); setNotice(genericError); setPhase("failed"); setCsrf(""); return; }
+      if (!result.ok) { setReference(typeof result.reference === "string" ? result.reference : reference); setNotice(typeof result.message === "string" ? result.message : genericError); setPhase("failed"); setCsrf(""); return; }
       setReference(typeof result.reference === "string" ? result.reference : reference); setTap(result.tap); setExpiresAt(Date.parse(result.expiresAt)); setEmailNoticeQueued(result.emailNoticeQueued === true); setPhase("tap");
     } catch { setNotice(genericError); setPhase("failed"); setCsrf(""); }
     finally { setBusy(false); }
@@ -202,7 +202,7 @@ export function Demo() {
             </aside>
           </div>}
 
-          {phase === "failed" && <div className="simple-state result-block error-block"><div className="result-icon error-icon">!</div><h2>Vi fikk ikke bekreftet deg</h2><p>{notice || genericError}</p>{reference && <p className="error-reference">Referanse: <code>{reference}</code></p>}<button className="primary-button" type="button" onClick={closeFlow}>Prøv igjen <span aria-hidden="true">→</span></button></div>}
+          {phase === "failed" && <div className="simple-state result-block error-block"><div className="result-icon error-icon">!</div><h2>Forespørselen kunne ikke fullføres</h2><p>{notice || genericError}</p>{reference && <p className="error-reference">Referanse: <code>{reference}</code></p>}<button className="primary-button" type="button" onClick={closeFlow}>Prøv igjen <span aria-hidden="true">→</span></button></div>}
 
           {phase === "eligible" && <div className="simple-state eligible-state">
             <div className="result-icon success-icon">✓</div><h2>Identiteten er bekreftet</h2>
