@@ -71,7 +71,7 @@ Alle sider i demomodusen viser «Simulert Vipps · ekte TAP i demotenant». Før
 - Kontoen skal være aktiv og være en tillatt intern medlemskonto.
 - I demo må kontoens object ID stå i den eksplisitte testkonto-listen.
 - Kontoen må være tillatt av `idcheck-enabled` og ikke omfattet av en sperreliste.
-- Administratorer, nødtilgangskontoer og tjenestekontoer utelukkes. Rolleoppslag må dekke direkte roller, relevante gruppetildelinger og PIM-berettigelser. Hvis en relevant tildelingsform ikke kan verifiseres, avvises utstedelse for det oppsettet.
+- Administratorer, nødtilgangskontoer og tjenestekontoer utelukkes. Rolleoppslag må dekke direkte roller, relevante gruppetildelinger og PIM-berettigelser før ekstern pilot. I den nåværende demoen er PIM-berettigelsessjekken midlertidig deaktivert fordi demotenanten mangler P2/Governance-lisens; aktive roller kontrolleres fortsatt.
 - Kontoen skal omfattes av TAP-policyen, og ønsket levetid skal være tillatt. Første versjon kan støtte et avgrenset, dokumentert policyoppsett og avvise oppsett den ikke kan evaluere sikkert.
 - Verifiseringen skal være fersk, og forsøksgrenser og utstedelseskarantene skal ikke være overskredet.
 - Ukjent sikkerhetsstatus gir avvisning. Demoen skal aldri utelate kontroller fordi Graph svarer med feil.
@@ -142,7 +142,7 @@ Dokumentasjonen skal være en konkret oppskrift for app-eier og kundeadministrat
 7. Registrer kontaktperson, tillatte testkonto-ID-er og nødvendige gruppereferanser.
 8. Kjør en lesende forhåndssjekk. Ekte TAP opprettes først ved den eksplisitte brukerhandlingen i flyten.
 
-Planlagte Graph-rettigheter: `User.Read.All`, `UserAuthMethod-TAP.ReadWrite.All`, `GroupMember.Read.All`, `RoleManagement.Read.Directory` og `Policy.Read.AuthenticationMethod`. Detaljert dekning og rettigheter for PIM-oppslag verifiseres før implementeringen låses. Ingen automatisk fallback til `UserAuthenticationMethod.ReadWrite.All`, og ingen custom security attribute-rettigheter nå.
+Planlagte Graph-rettigheter for den nåværende demoen: `User.Read.All`, `UserAuthMethod-TAP.ReadWrite.All`, `RoleManagement.Read.Directory` og `Policy.Read.AuthenticationMethod`. PIM-berettigelsessjekken må gjeninnføres før bruk i tenant med PIM. Ingen automatisk fallback til `UserAuthenticationMethod.ReadWrite.All`, og ingen custom security attribute-rettigheter nå.
 
 Admin consent bruker tilfeldig engangs-state bundet til en autorisert onboardingøkt og forventet tenant. Slug er metadata på serveren, ikke state. Callbacken alene aktiverer ikke en tenant; faktisk Graph-tilgang må kontrolleres.
 

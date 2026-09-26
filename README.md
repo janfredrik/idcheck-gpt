@@ -8,7 +8,7 @@ Selvbetjent kontogjenoppretting for Microsoft Entra ID. Første versjon er avgre
 
 - Norsk, mobiltilpasset førsteside med organisasjonssøk, animert bakgrunn og støtte for redusert bevegelse.
 - Simulert Vipps-godkjenning/avvisning; BankID er deaktivert.
-- Ekte Graph-oppslag, fast tenant, testkonto-allowlist, gruppekrav, TAP-policy og fail-closed rolle/PIM-kontroller.
+- Ekte Graph-oppslag, fast tenant, testkonto-allowlist, gruppekrav, TAP-policy og fail-closed kontroll av aktive katalogroller. PIM-berettigelser kontrolleres ikke i denne demoen.
 - Ekte 60-minutters engangs-TAP, vist kun i opprinnelig svar.
 - PostgreSQL for sesjoner, engangsutstedelse, rate limiting, revisjon og varslingskø.
 - SMTP-varsler ved start og slutt på registrerte forsøk. Varsler inneholder ingen mobilnummer eller TAP.
@@ -30,9 +30,8 @@ Legg til disse **Microsoft Graph / Application permissions**:
 | `UserAuthMethod-TAP.ReadWrite.All` | Kontrollere eksisterende TAP og opprette TAP |
 | `Policy.Read.AuthenticationMethod` | Kontrollere TAP-policyen |
 | `RoleManagement.Read.Directory` | Kontrollere aktive katalogroller |
-| `RoleEligibilitySchedule.Read.Directory` | Kontrollere PIM-berettigede katalogroller |
 
-Før en lenke opprettes, fjern ubrukte Graph-rettigheter fra appregistreringen. idcheck ber om `.default`, så Microsofts consent-side viser samtlige rettigheter som er konfigurert på denne appen. For denne demoversjonen skal det bare være de fem over.
+Før en lenke opprettes, fjern ubrukte Graph-rettigheter fra appregistreringen. idcheck ber om `.default`, så Microsofts consent-side viser samtlige rettigheter som er konfigurert på denne appen. For denne demoversjonen skal det bare være de fire over.
 
 App-eieren logger inn på idcheck og åpner `/admin`, lager en kortlivet engangslenke og sender den til demotenantens administrator. Administratoren logger inn i riktig tenant og kontrollerer rettighetene før godkjenning. Microsoft returnerer nettleseren til den registrerte callbacken. Callbacken bruker `state` som utløper etter 15 minutter og kan bare brukes én gang; den kontrollerer også at appen faktisk kan kalle Graph med de nødvendige rettighetene. Hvis callbacken sier at tilgang ikke kan kontrolleres, opprett en ny lenke etter å ha rettet consent.
 
@@ -108,7 +107,7 @@ Etter første publisering, velg synlighet for pakken under GitHub Packages. Unra
 - Simulert Vipps er ikke identitetsbevis. Testmiljøets tilgangskontroll og konto-allowlist avgrenser testen.
 - Serveren er fastlåst til én tenant og ignorerer ikke en mismatch mellom tenant-ID i request og konfigurasjon.
 - Krev eksakt, entydig `mobilePhone`-match. Duplikater og manglende treff avvises likt.
-- Kontoen må være aktiv, intern, allowlistet, medlem av `idcheck-enabled`, omfattet av TAP-policyen og uten aktive/PIM-berettigede Entra-roller.
+- Kontoen må være aktiv, intern, allowlistet, medlem av `idcheck-enabled`, omfattet av TAP-policyen og uten aktive Entra-roller. PIM-berettigelser kontrolleres ikke i denne demoversjonen fordi demotenanten mangler P2/Governance-lisens; ikke bruk oppsettet i en tenant der PIM-berettigelser er i bruk.
 - Graph-feil gir avvisning. Mobilnummer lagres ikke; revisjon og rate limiting bruker HMAC-referanser.
 - TAP opprettes etter eksplisitt klikk. DB-lås serialiserer utstedelse per konto; et uavklart Graph-resultat forsøkes ikke automatisk på nytt.
 - TAP vises én gang, med `no-store`, og går aldri i PostgreSQL eller e-post.

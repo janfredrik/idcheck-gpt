@@ -72,7 +72,7 @@ export async function checkRequiredDemoPermissions(): Promise<void> {
   if (parts.length !== 3) throw new Error("GRAPH_TOKEN_INVALID");
   const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as { tid?: string; aud?: string; exp?: number; roles?: string[] };
   const graphAudiences = new Set(["https://graph.microsoft.com", "00000003-0000-0000-c000-000000000000"]);
-  const requiredRoles = ["User.Read.All", "UserAuthMethod-TAP.ReadWrite.All", "Policy.Read.AuthenticationMethod", "RoleManagement.Read.Directory", "RoleEligibilitySchedule.Read.Directory"];
+  const requiredRoles = ["User.Read.All", "UserAuthMethod-TAP.ReadWrite.All", "Policy.Read.AuthenticationMethod", "RoleManagement.Read.Directory"];
   if (claims.tid?.toLowerCase() !== config.tenantId.toLowerCase() || !claims.aud || !graphAudiences.has(claims.aud) || !claims.exp || claims.exp * 1000 <= Date.now() || !requiredRoles.every((role) => claims.roles?.includes(role))) throw new Error("GRAPH_PERMISSION_MISSING");
   const userId = [...config.allowedUserIds][0];
   const user = await getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id" }), result.accessToken, "CONSENT_USER_CHECK");
@@ -101,12 +101,9 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
   const isExcluded = excludes.some((target) => target.id === "all_users" || (!!target.id && principals.has(target.id.toLowerCase())));
   if (!isIncluded || isExcluded) return false;
 
-  // Fail closed for active or PIM-eligible directory roles, whether assigned to the user or a group.
+  // Fail closed for active directory roles, whether assigned directly or through a transitive group.
   const assignments = await collect<{ principalId?: string }>(graphUrl("roleManagement/directory/roleAssignments", { "$select": "principalId" }), accessToken, 50, "ROLE_ASSIGNMENTS");
   if (assignments.some((role) => role.principalId && principals.has(role.principalId.toLowerCase()))) return false;
-  const eligible = await collect<{ principalId?: string; startDateTime?: string; endDateTime?: string }>(graphUrl("roleManagement/directory/roleEligibilityScheduleInstances", { "$select": "principalId,startDateTime,endDateTime" }), accessToken, 50, "ROLE_ELIGIBILITY");
-  const now = Date.now();
-  if (eligible.some((role) => role.principalId && principals.has(role.principalId.toLowerCase()) && (!role.startDateTime || Date.parse(role.startDateTime) <= now) && (!role.endDateTime || Date.parse(role.endDateTime) > now))) return false;
   return true;
 }
 
