@@ -14,18 +14,29 @@ async function token(): Promise<string> {
   const result = await client().acquireTokenByClientCredential({ scopes: ["https://graph.microsoft.com/.default"] });
   if (!result?.accessToken) throw new Error("GRAPH_AUTH_FAILED"); return result.accessToken;
 }
-async function getJson<T>(url: string, accessToken: string, operation = "REQUEST"): Promise<T> {
+async function throwGraphError(response: Response, operation: string): Promise<never> {
+  let code = "";
+  try {
+    const body = await response.json() as { error?: { code?: unknown } };
+    if (typeof body.error?.code === "string") code = body.error.code.replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 20);
+  } catch { /* Keep diagnostics to the HTTP status if Graph returned no JSON body. */ }
+  throw new Error(`GRAPH_${operation}_${response.status}${code ? `_${code}` : ""}`);
+}
+
+async function getJson<T>(url: string, accessToken: string, operation = "REQUEST", eventualConsistency = false): Promise<T> {
   const parsed = new URL(url);
   if (parsed.origin !== "https://graph.microsoft.com" || !parsed.pathname.startsWith("/v1.0/")) throw new Error("GRAPH_URL_REJECTED");
-  const response = await fetch(parsed, { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json", ConsistencyLevel: "eventual" }, cache: "no-store", signal: AbortSignal.timeout(12000) });
-  if (!response.ok) throw new Error(`GRAPH_${operation}_${response.status}`);
+  const headers = new Headers({ Authorization: `Bearer ${accessToken}`, Accept: "application/json" });
+  if (eventualConsistency) headers.set("ConsistencyLevel", "eventual");
+  const response = await fetch(parsed, { headers, cache: "no-store", signal: AbortSignal.timeout(12000) });
+  if (!response.ok) await throwGraphError(response, operation);
   return response.json() as Promise<T>;
 }
-async function collect<T>(url: string, accessToken: string, maximumPages = 50, operation = "LIST"): Promise<T[]> {
+async function collect<T>(url: string, accessToken: string, maximumPages = 50, operation = "LIST", eventualConsistency = false): Promise<T[]> {
   const results: T[] = []; let next: string | undefined = url; let pages = 0;
   while (next) {
     if (++pages > maximumPages) throw new Error("GRAPH_RESULT_LIMIT");
-    const page: GraphPage<T> = await getJson<GraphPage<T>>(next, accessToken, operation);
+    const page: GraphPage<T> = await getJson<GraphPage<T>>(next, accessToken, operation, eventualConsistency);
     if (!Array.isArray(page.value)) throw new Error("GRAPH_RESULT_INVALID");
     results.push(...page.value); if (results.length > 10000) throw new Error("GRAPH_RESULT_LIMIT");
     next = page["@odata.nextLink"];
@@ -41,7 +52,7 @@ function graphUrl(path: string, params?: Record<string, string>): string {
 export async function findUniqueMobileMatch(mobile: string): Promise<{ user: GraphUser | null; reason: string }> {
   const config = getDemoConfig(); if (!config) throw new Error("CONFIG_INVALID");
   const accessToken = await token(); const escaped = mobile.replaceAll("'", "''");
-  const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100", "$count": "true" }), accessToken, 3, "USER_LOOKUP");
+  const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100", "$count": "true" }), accessToken, 3, "USER_LOOKUP", true);
   const exactMatches = users.filter((user) => user.mobilePhone === mobile);
   return exactMatches.length === 1 ? { user: exactMatches[0], reason: "MATCHED" } : { user: null, reason: exactMatches.length ? "AMBIGUOUS_MATCH" : "NO_MATCH" };
 }
@@ -49,7 +60,7 @@ export async function findUniqueMobileMatch(mobile: string): Promise<{ user: Gra
 export async function getUserById(userId: string): Promise<GraphUser | null> {
   const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) return null;
   const accessToken = await token();
-  return getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType" }), accessToken);
+  return getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType" }), accessToken, "USER_BY_ID");
 }
 
 export async function checkRequiredDemoPermissions(): Promise<void> {
@@ -73,7 +84,7 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
   if (!config || !config.allowedUserIds.has(user.id.toLowerCase())) return false;
   if (user.accountEnabled !== true || user.userType !== "Member" || !user.userPrincipalName) return false;
   const accessToken = await token();
-  const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999", "$count": "true" }), accessToken, 50, "GROUP_MEMBERSHIP");
+  const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999", "$count": "true" }), accessToken, 50, "GROUP_MEMBERSHIP", true);
   const groupIds = new Set(groups.flatMap(({ id }) => id ? [id.toLowerCase()] : []));
   if (!groupIds.has(config.allowedGroupId.toLowerCase())) return false;
 
@@ -102,7 +113,7 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
 export async function createOneTimeTap(userId: string): Promise<{ tap: string; expiresAt: string }> {
   const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) throw new Error("TARGET_NOT_ALLOWED");
   const accessToken = await token();
-  const existing = await getJson<{ value?: Array<{ startDateTime?: string; lifetimeInMinutes?: number }> }>(graphUrl(`users/${encodeURIComponent(userId)}/authentication/temporaryAccessPassMethods`), accessToken);
+  const existing = await getJson<{ value?: Array<{ startDateTime?: string; lifetimeInMinutes?: number }> }>(graphUrl(`users/${encodeURIComponent(userId)}/authentication/temporaryAccessPassMethods`), accessToken, "TAP_LIST");
   const now = Date.now();
   const hasLivePass = (existing.value ?? []).some((pass) => {
     const start = Date.parse(pass.startDateTime ?? ""); const life = pass.lifetimeInMinutes;
@@ -114,7 +125,7 @@ export async function createOneTimeTap(userId: string): Promise<{ tap: string; e
     method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ lifetimeInMinutes: LIFETIME_MINUTES, isUsableOnce: true }), cache: "no-store", signal: AbortSignal.timeout(15000)
   });
-  if (!response.ok) throw new Error(`GRAPH_TAP_${response.status}`);
+  if (!response.ok) await throwGraphError(response, "TAP_CREATE");
   const method = await response.json() as { temporaryAccessPass?: string; startDateTime?: string; lifetimeInMinutes?: number };
   if (typeof method.temporaryAccessPass !== "string" || !method.temporaryAccessPass) throw new Error("GRAPH_TAP_RESPONSE_INVALID");
   const start = Date.parse(method.startDateTime ?? new Date().toISOString()); const lifetime = method.lifetimeInMinutes ?? LIFETIME_MINUTES;
