@@ -73,7 +73,7 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
   if (!config || !config.allowedUserIds.has(user.id.toLowerCase())) return false;
   if (user.accountEnabled !== true || user.userType !== "Member" || !user.userPrincipalName) return false;
   const accessToken = await token();
-  const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999" }), accessToken);
+  const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999", "$count": "true" }), accessToken);
   const groupIds = new Set(groups.flatMap(({ id }) => id ? [id.toLowerCase()] : []));
   if (!groupIds.has(config.allowedGroupId.toLowerCase())) return false;
 
