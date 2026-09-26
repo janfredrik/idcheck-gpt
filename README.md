@@ -6,12 +6,12 @@ Selvbetjent kontogjenoppretting for Microsoft Entra ID. Første versjon er avgre
 
 ## Innhold
 
-- Norsk, mobiltilpasset førsteside med organisasjonssøk, animert bakgrunn og støtte for redusert bevegelse.
+- Norsk, mobiltilpasset gjenopprettingsflyt med organisasjonssøk, stor arbeidsflate og bla-gjennom-guide for Microsoft Authenticator. Guiden har QR-koder til App Store og Google Play.
 - Simulert Vipps-godkjenning/avvisning; BankID er deaktivert.
 - Ekte Graph-oppslag, fast tenant, testkonto-allowlist, gruppekrav, TAP-policy og fail-closed kontroll av aktive katalogroller. PIM-berettigelser kontrolleres ikke i denne demoen.
 - Ekte 60-minutters engangs-TAP, vist kun i opprinnelig svar.
 - PostgreSQL for sesjoner, engangsutstedelse, rate limiting, revisjon og varslingskø.
-- SMTP-varsler ved start og slutt på registrerte forsøk. Varsler inneholder ingen mobilnummer eller TAP.
+- SMTP-varsler til IT ved forsøk og en egen sikkerhetsmelding til brukerens `mail`-adresse når TAP opprettes. Ingen e-post inneholder TAP-verdien.
 - Docker Compose for Unraid og GitHub Actions for GHCR-image.
 
 Ekte Vipps, BankID/Signicat, produksjonstenants og adminpanel er ikke med ennå.
@@ -26,7 +26,7 @@ Legg til disse **Microsoft Graph / Application permissions**:
 
 | Rettighet | Bruk |
 |---|---|
-| `User.Read.All` | Lese konto, mobilnummer, status og medlemskap |
+| `User.Read.All` | Lese konto, mobilnummer, e-postadresse, status og medlemskap |
 | `UserAuthMethod-TAP.ReadWrite.All` | Kontrollere eksisterende TAP og opprette TAP |
 | `Policy.Read.AuthenticationMethod` | Kontrollere TAP-policyen |
 | `RoleManagement.Read.Directory` | Kontrollere aktive katalogroller |
@@ -110,7 +110,7 @@ Etter første publisering, velg synlighet for pakken under GitHub Packages. Unra
 - Kontoen må være aktiv, intern, allowlistet, medlem av `idcheck-enabled`, omfattet av TAP-policyen og uten aktive Entra-roller. PIM-berettigelser kontrolleres ikke i denne demoversjonen fordi demotenanten mangler P2/Governance-lisens; ikke bruk oppsettet i en tenant der PIM-berettigelser er i bruk.
 - Graph-feil gir avvisning. Mobilnummer lagres ikke; revisjon og rate limiting bruker HMAC-referanser.
 - TAP opprettes etter eksplisitt klikk. DB-lås serialiserer utstedelse per konto; et uavklart Graph-resultat forsøkes ikke automatisk på nytt.
-- TAP vises én gang, med `no-store`, og går aldri i PostgreSQL eller e-post.
+- TAP vises én gang, med `no-store`, og går aldri i PostgreSQL eller e-post. Når det finnes en gyldig e-postadresse i `mail`-attributtet, legges et varsel til brukeren i SMTP-køen. Varselet ber brukeren kontakte IT hvis de ikke ba om koden; e-postadressen fjernes fra kø-raden etter vellykket sending.
 - CSRF-token, Origin-kontroll, `SameSite=Strict` og sikkerhetsheadere beskytter utstedelsesflyten.
 - Forsøk registreres og varsel legges i kø før ventesiden vises. Avbrutte og utløpte forsøk varsles også.
 

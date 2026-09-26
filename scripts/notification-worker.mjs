@@ -19,6 +19,11 @@ process.on("SIGTERM", () => { stopping = true; });
 process.on("SIGINT", () => { stopping = true; });
 
 function messageFor(event) {
+  if (event.event_type === "user_tap_notice") {
+    const subject = "Engangskode opprettet for kontoen din";
+    const text = `En midlertidig engangskode (TAP) ble opprettet for kontoen din i idcheck. Koden sendes aldri på e-post.\n\nHvis du ikke ba om dette, kontakt IT-avdelingen umiddelbart og be dem tilbakekalle engangskoden og undersøke kontoen.\n\nTidspunkt: ${new Date(event.created_at).toISOString()}. Referanse: ${event.attempt_id}.`;
+    return { subject, text };
+  }
   const names = {
     attempt_started: "Nytt idcheck-forsøk startet",
     attempt_rate_limited: "idcheck-forsøk stoppet av forsøksgrense",
@@ -62,7 +67,7 @@ while (!stopping) {
     const message = messageFor(event);
     try {
       await transport.sendMail({ from: process.env.SMTP_FROM, to: event.recipient, ...message });
-      await pool.query("UPDATE notification_outbox SET status='sent',sent_at=now(),locked_at=NULL WHERE id=$1", [event.id]);
+      await pool.query("UPDATE notification_outbox SET status='sent',sent_at=now(),locked_at=NULL,recipient=CASE WHEN event_type='user_tap_notice' THEN '[redacted]' ELSE recipient END WHERE id=$1", [event.id]);
     } catch {
       await pool.query("UPDATE notification_outbox SET status='failed',next_attempt_at=now()+LEAST(interval '1 hour',interval '30 seconds'*power(2,LEAST(attempts,7))),locked_at=NULL WHERE id=$1", [event.id]).catch(() => undefined);
       // Keep credentials, message contents, and recipient out of process logs.

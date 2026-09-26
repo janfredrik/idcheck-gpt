@@ -1,7 +1,7 @@
 import { ConfidentialClientApplication } from "@azure/msal-node";
 import { getDemoConfig, LIFETIME_MINUTES } from "@/lib/config";
 
-type GraphUser = { id: string; userPrincipalName?: string; mobilePhone?: string | null; accountEnabled?: boolean; userType?: string };
+type GraphUser = { id: string; userPrincipalName?: string; mobilePhone?: string | null; mail?: string | null; accountEnabled?: boolean; userType?: string };
 type GraphPage<T> = { value?: T[]; "@odata.nextLink"?: string };
 let msalApp: ConfidentialClientApplication | undefined;
 
@@ -60,7 +60,7 @@ export async function findUniqueMobileMatch(mobile: string): Promise<{ user: Gra
 export async function getUserById(userId: string): Promise<GraphUser | null> {
   const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) return null;
   const accessToken = await token();
-  return getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType" }), accessToken, "USER_BY_ID");
+  return getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id,userPrincipalName,mobilePhone,mail,accountEnabled,userType" }), accessToken, "USER_BY_ID");
 }
 
 export async function checkRequiredDemoPermissions(): Promise<void> {

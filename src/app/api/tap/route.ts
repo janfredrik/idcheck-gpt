@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
       if (!currentMobile || !originalAttempt.rows[0] || !safeEqual(hashForRateLimit(currentMobile), originalAttempt.rows[0].phone_hash)) throw new Error("MATCH_ATTRIBUTE_CHANGED");
       const result = await createOneTimeTap(claimed!.user_id);
       await client.query("UPDATE flow_sessions SET status='issued' WHERE token_hash=$1", [claimed!.token_hash]);
-      return result;
+      return { ...result, userEmail: user.mail ?? null };
     });
-    await finishAttempt(claimed.attempt_id, "issued");
-    const response = noStore(NextResponse.json({ ok: true, tap: issued.tap, expiresAt: issued.expiresAt }));
+    const emailNoticeQueued = await finishAttempt(claimed.attempt_id, "issued", undefined, issued.userEmail);
+    const response = noStore(NextResponse.json({ ok: true, tap: issued.tap, expiresAt: issued.expiresAt, emailNoticeQueued }));
     clearSessionCookie(response);
     return response;
   } catch (error) {

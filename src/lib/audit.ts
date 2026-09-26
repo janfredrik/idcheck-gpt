@@ -36,11 +36,20 @@ export async function consumeSimulation(input: { tokenHash: string; tenantId: st
   });
 }
 
-export async function finishAttempt(id: string, outcome: "rejected" | "verified" | "issued" | "expired" | "unknown", reasonCode?: string): Promise<void> {
+function validMailbox(value?: string | null): value is string {
+  return typeof value === "string" && value.length <= 320 && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(value);
+}
+
+export async function finishAttempt(id: string, outcome: "rejected" | "verified" | "issued" | "expired" | "unknown", reasonCode?: string, userEmail?: string | null): Promise<boolean> {
   const client = await pool().connect();
   try {
     const safeReason = reasonCode && /^[A-Z0-9_:-]{1,60}$/.test(reasonCode) ? reasonCode : null;
     await client.query("UPDATE attempts SET outcome=$2,reason_code=$3,finished_at=now() WHERE id=$1", [id, outcome, safeReason]);
     await client.query("INSERT INTO notification_outbox (attempt_id,event_type,recipient) VALUES ($1,$2,$3)", [id, `attempt_${outcome}`, process.env.ALERT_EMAIL]);
+    if (outcome === "issued" && validMailbox(userEmail)) {
+      await client.query("INSERT INTO notification_outbox (attempt_id,event_type,recipient) VALUES ($1,'user_tap_notice',$2)", [id, userEmail]);
+      return true;
+    }
+    return false;
   } finally { client.release(); }
 }
