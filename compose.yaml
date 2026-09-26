@@ -1,0 +1,91 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: idcheck
+      POSTGRES_USER: idcheck
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a strong POSTGRES_PASSWORD in the runtime environment}
+    volumes:
+      - idcheck_data:/var/lib/postgresql/data
+    networks: [idcheck-internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U idcheck -d idcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+
+  migrate:
+    image: ${IDCHECK_IMAGE:-idcheck:local}
+    build: .
+    restart: "no"
+    command: ["npm", "run", "db:migrate"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://idcheck:${POSTGRES_PASSWORD}@db:5432/idcheck
+      DATABASE_SSL: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [idcheck-internal]
+
+  web:
+    image: ${IDCHECK_IMAGE:-idcheck:local}
+    build: .
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    environment: &runtime-environment
+      NODE_ENV: production
+      DATABASE_URL: postgres://idcheck:${POSTGRES_PASSWORD}@db:5432/idcheck
+      DATABASE_SSL: "false"
+      IDCHECK_MODE: ${IDCHECK_MODE:-demo}
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
+      DEMO_TAP_ENABLED: ${DEMO_TAP_ENABLED:-false}
+      DEMO_TENANT_ID: ${DEMO_TENANT_ID:-}
+      DEMO_TENANT_NAME: ${DEMO_TENANT_NAME:-}
+      DEMO_ALLOWED_USER_IDS: ${DEMO_ALLOWED_USER_IDS:-}
+      DEMO_ALLOWED_GROUP_ID: ${DEMO_ALLOWED_GROUP_ID:-}
+      ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
+      ENTRA_CLIENT_SECRET: ${ENTRA_CLIENT_SECRET:-}
+      RATE_LIMIT_HMAC_KEY: ${RATE_LIMIT_HMAC_KEY:-}
+      ALERT_EMAIL: ${ALERT_EMAIL:-}
+      APP_ACCESS_USER: ${APP_ACCESS_USER:-}
+      APP_ACCESS_PASSWORD: ${APP_ACCESS_PASSWORD:-}
+    ports:
+      - "127.0.0.1:${IDCHECK_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    networks: [idcheck-internal, idcheck-egress]
+
+  notifications:
+    image: ${IDCHECK_IMAGE:-idcheck:local}
+    build: .
+    restart: unless-stopped
+    init: true
+    command: ["npm", "run", "worker"]
+    environment:
+      <<: *runtime-environment
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [idcheck-internal, idcheck-egress]
+
+volumes:
+  idcheck_data:
+
+networks:
+  idcheck-internal:
+    internal: true
+  idcheck-egress:

@@ -1,0 +1,9 @@
+{
+  "name": "idcheck",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {"dev": "next dev", "build": "next build", "start": "next start", "db:migrate": "node scripts/migrate.mjs", "worker": "node scripts/notification-worker.mjs"},
+  "dependencies": {"@azure/msal-node": "^4.3.0", "next": "^16.2.0", "nodemailer": "^7.0.10", "pg": "^8.16.3", "react": "^19.2.0", "react-dom": "^19.2.0"},
+  "devDependencies": {"@types/node": "^24.10.0", "@types/nodemailer": "^7.0.4", "@types/pg": "^8.15.6", "@types/react": "^19.2.7", "@types/react-dom": "^19.2.3", "typescript": "^5.9.3"},
+  "engines": {"node": ">=20.9"}
+}

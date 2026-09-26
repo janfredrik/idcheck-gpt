@@ -1,0 +1,106 @@
+import { ConfidentialClientApplication } from "@azure/msal-node";
+import { getDemoConfig, LIFETIME_MINUTES } from "@/lib/config";
+
+type GraphUser = { id: string; userPrincipalName?: string; mobilePhone?: string | null; accountEnabled?: boolean; userType?: string };
+type GraphPage<T> = { value?: T[]; "@odata.nextLink"?: string };
+let msalApp: ConfidentialClientApplication | undefined;
+
+function client(): ConfidentialClientApplication {
+  const config = getDemoConfig(); if (!config) throw new Error("CONFIG_INVALID");
+  if (!msalApp) msalApp = new ConfidentialClientApplication({ auth: { clientId: config.appClientId, authority: `https://login.microsoftonline.com/${config.tenantId}`, clientSecret: config.appClientSecret } });
+  return msalApp;
+}
+async function token(): Promise<string> {
+  const result = await client().acquireTokenByClientCredential({ scopes: ["https://graph.microsoft.com/.default"] });
+  if (!result?.accessToken) throw new Error("GRAPH_AUTH_FAILED"); return result.accessToken;
+}
+async function getJson<T>(url: string, accessToken: string): Promise<T> {
+  const parsed = new URL(url);
+  if (parsed.origin !== "https://graph.microsoft.com" || !parsed.pathname.startsWith("/v1.0/")) throw new Error("GRAPH_URL_REJECTED");
+  const response = await fetch(parsed, { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json", ConsistencyLevel: "eventual" }, cache: "no-store", signal: AbortSignal.timeout(12000) });
+  if (!response.ok) throw new Error(`GRAPH_${response.status}`);
+  return response.json() as Promise<T>;
+}
+async function collect<T>(url: string, accessToken: string, maximumPages = 50): Promise<T[]> {
+  const results: T[] = []; let next: string | undefined = url; let pages = 0;
+  while (next) {
+    if (++pages > maximumPages) throw new Error("GRAPH_RESULT_LIMIT");
+    const page = await getJson<GraphPage<T>>(next, accessToken);
+    if (!Array.isArray(page.value)) throw new Error("GRAPH_RESULT_INVALID");
+    results.push(...page.value); if (results.length > 10000) throw new Error("GRAPH_RESULT_LIMIT");
+    next = page["@odata.nextLink"];
+  }
+  return results;
+}
+function graphUrl(path: string, params?: Record<string, string>): string {
+  const url = new URL(`https://graph.microsoft.com/v1.0/${path.replace(/^\//, "")}`);
+  for (const [key, value] of Object.entries(params ?? {})) url.searchParams.set(key, value);
+  return url.toString();
+}
+
+export async function findUniqueMobileMatch(mobile: string): Promise<GraphUser | null> {
+  const config = getDemoConfig(); if (!config) throw new Error("CONFIG_INVALID");
+  const accessToken = await token(); const escaped = mobile.replaceAll("'", "''");
+  const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100" }), accessToken, 3);
+  const exactMatches = users.filter((user) => user.mobilePhone === mobile);
+  return exactMatches.length === 1 ? exactMatches[0] : null;
+}
+
+export async function getUserById(userId: string): Promise<GraphUser | null> {
+  const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) return null;
+  const accessToken = await token();
+  return getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType" }), accessToken);
+}
+
+export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
+  const config = getDemoConfig();
+  if (!config || !config.allowedUserIds.has(user.id.toLowerCase())) return false;
+  if (user.accountEnabled !== true || user.userType !== "Member" || !user.userPrincipalName) return false;
+  const accessToken = await token();
+  const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999" }), accessToken);
+  const groupIds = new Set(groups.flatMap(({ id }) => id ? [id.toLowerCase()] : []));
+  if (!groupIds.has(config.allowedGroupId.toLowerCase())) return false;
+
+  const policy = await getJson<{
+    state?: string; minimumLifetimeInMinutes?: number; maximumLifetimeInMinutes?: number;
+    includeTargets?: Array<{ id?: string; targetType?: string }>;
+    excludeTargets?: Array<{ id?: string; targetType?: string }>;
+  }>(graphUrl("policies/authenticationMethodsPolicy/authenticationMethodConfigurations/TemporaryAccessPass"), accessToken);
+  if (policy.state !== "enabled" || policy.minimumLifetimeInMinutes == null || policy.maximumLifetimeInMinutes == null) return false;
+  if (LIFETIME_MINUTES < policy.minimumLifetimeInMinutes || LIFETIME_MINUTES > policy.maximumLifetimeInMinutes) return false;
+  const principals = new Set([user.id.toLowerCase(), ...groupIds]);
+  const includes = policy.includeTargets ?? []; const excludes = policy.excludeTargets ?? [];
+  const isIncluded = includes.some((target) => target.id === "all_users" || (!!target.id && principals.has(target.id.toLowerCase())));
+  const isExcluded = excludes.some((target) => target.id === "all_users" || (!!target.id && principals.has(target.id.toLowerCase())));
+  if (!isIncluded || isExcluded) return false;
+
+  // Fail closed for active or PIM-eligible directory roles, whether assigned to the user or a group.
+  const assignments = await collect<{ principalId?: string }>(graphUrl("roleManagement/directory/roleAssignments", { "$select": "principalId", "$top": "999" }), accessToken);
+  if (assignments.some((role) => role.principalId && principals.has(role.principalId.toLowerCase()))) return false;
+  const eligible = await collect<{ principalId?: string; startDateTime?: string; endDateTime?: string }>(graphUrl("roleManagement/directory/roleEligibilityScheduleInstances", { "$select": "principalId,startDateTime,endDateTime", "$top": "999" }), accessToken);
+  const now = Date.now();
+  if (eligible.some((role) => role.principalId && principals.has(role.principalId.toLowerCase()) && (!role.startDateTime || Date.parse(role.startDateTime) <= now) && (!role.endDateTime || Date.parse(role.endDateTime) > now))) return false;
+  return true;
+}
+
+export async function createOneTimeTap(userId: string): Promise<{ tap: string; expiresAt: string }> {
+  const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) throw new Error("TARGET_NOT_ALLOWED");
+  const accessToken = await token();
+  const existing = await getJson<{ value?: Array<{ startDateTime?: string; lifetimeInMinutes?: number }> }>(graphUrl(`users/${encodeURIComponent(userId)}/authentication/temporaryAccessPassMethods`), accessToken);
+  const now = Date.now();
+  const hasLivePass = (existing.value ?? []).some((pass) => {
+    const start = Date.parse(pass.startDateTime ?? ""); const life = pass.lifetimeInMinutes;
+    return Number.isFinite(start) && Number.isFinite(life) && start + life! * 60000 > now;
+  });
+  if (hasLivePass) throw new Error("ACTIVE_TAP_EXISTS");
+
+  const response = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(userId)}/authentication/temporaryAccessPassMethods`, {
+    method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ lifetimeInMinutes: LIFETIME_MINUTES, isUsableOnce: true }), cache: "no-store", signal: AbortSignal.timeout(15000)
+  });
+  if (!response.ok) throw new Error(`GRAPH_TAP_${response.status}`);
+  const method = await response.json() as { temporaryAccessPass?: string; startDateTime?: string; lifetimeInMinutes?: number };
+  if (typeof method.temporaryAccessPass !== "string" || !method.temporaryAccessPass) throw new Error("GRAPH_TAP_RESPONSE_INVALID");
+  const start = Date.parse(method.startDateTime ?? new Date().toISOString()); const lifetime = method.lifetimeInMinutes ?? LIFETIME_MINUTES;
+  return { tap: method.temporaryAccessPass, expiresAt: new Date(start + lifetime * 60000).toISOString() };
+}
