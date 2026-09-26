@@ -14,6 +14,7 @@ export function Demo() {
   const [search, setSearch] = useState("");
   const [listOpen, setListOpen] = useState(false);
   const [mobile, setMobile] = useState("");
+  const [attemptToken, setAttemptToken] = useState("");
   const [csrf, setCsrf] = useState("");
   const [account, setAccount] = useState("");
   const [tap, setTap] = useState("");
@@ -52,18 +53,30 @@ export function Demo() {
 
   const filteredTenants = useMemo(() => tenants.filter((item) => item.name.toLocaleLowerCase("no").includes(search.toLocaleLowerCase("no"))), [tenants, search]);
 
-  async function startSimulation(decision: "approved" | "denied") {
+  async function beginFlow() {
     if (!tenant || busy) return;
+    setBusy(true); setNotice("");
+    try {
+      const response = await fetch("/api/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenantId: tenant.id, mobile }), cache: "no-store" });
+      const result = await response.json();
+      if (!result.ok) { setNotice(genericError); setPhase("failed"); return; }
+      setAttemptToken(result.attemptToken); setPhase("waiting");
+    } catch { setNotice(genericError); setPhase("failed"); }
+    finally { setBusy(false); }
+  }
+
+  async function startSimulation(decision: "approved" | "denied") {
+    if (!tenant || !attemptToken || busy) return;
     setBusy(true); setNotice("");
     try {
       const response = await fetch("/api/verify", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenantId: tenant.id, mobile, decision }), cache: "no-store"
+        body: JSON.stringify({ tenantId: tenant.id, mobile, decision, attemptToken }), cache: "no-store"
       });
       const result = await response.json();
       if (result.ok) { setAccount(result.account); setCsrf(result.csrf); setPhase("eligible"); }
-      else { setNotice(genericError); setPhase("failed"); }
-    } catch { setNotice(genericError); setPhase("failed"); }
+      else { setAttemptToken(""); setNotice(genericError); setPhase("failed"); }
+    } catch { setAttemptToken(""); setNotice(genericError); setPhase("failed"); }
     finally { setBusy(false); }
   }
 
@@ -81,7 +94,8 @@ export function Demo() {
 
   async function closeFlow() {
     setTap(""); setCsrf(""); setMobile(""); setAccount(""); setNotice(""); setTenant(null); setSearch("");
-    await fetch("/api/session", { method: "DELETE", cache: "no-store" }).catch(() => undefined);
+    await fetch("/api/session", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attemptToken }), cache: "no-store" }).catch(() => undefined);
+    setAttemptToken("");
     setPhase(tenants.length ? "form" : "setup");
   }
 
@@ -132,16 +146,16 @@ export function Demo() {
             <label className="field-label" htmlFor="org">ORGANISASJON</label>
             <div className="combobox-wrap">
               <span className="field-icon">⌂</span>
-              <input id="org" role="combobox" aria-expanded={listOpen} aria-controls="org-list" aria-autocomplete="list" autoComplete="off" placeholder="Søk etter organisasjon" value={tenant?.name ?? search} onFocus={() => setListOpen(true)} onChange={(event) => { setTenant(null); setSearch(event.target.value); setListOpen(true); }} onKeyDown={(event) => { if (event.key === "Escape") setListOpen(false); if (event.key === "Enter" && filteredTenants.length === 1) { setTenant(filteredTenants[0]); setSearch(""); setListOpen(false); } }} />
+              <input id="org" role="combobox" aria-expanded={listOpen} aria-controls="org-list" aria-autocomplete="list" autoComplete="off" placeholder="Søk etter organisasjon" value={tenant?.name ?? search} disabled={phase === "waiting" || busy} onFocus={() => setListOpen(true)} onChange={(event) => { setTenant(null); setSearch(event.target.value); setListOpen(true); }} onKeyDown={(event) => { if (event.key === "Escape") setListOpen(false); if (event.key === "Enter" && filteredTenants.length === 1) { setTenant(filteredTenants[0]); setSearch(""); setListOpen(false); } }} />
               <span className="chevron">⌄</span>
               {listOpen && <div className="tenant-list" id="org-list" role="listbox">{filteredTenants.length ? filteredTenants.map((item) => <button key={item.id} type="button" role="option" aria-selected={tenant?.id === item.id} onMouseDown={(event) => event.preventDefault()} onClick={() => { setTenant(item); setSearch(""); setListOpen(false); }}>{item.name}<span>↗</span></button>) : <div className="no-results">Ingen treff. Kontroller skrivemåten.</div>}</div>}
             </div>
 
             <label className="field-label phone-label" htmlFor="mobile">MOBILNUMMER</label>
-            <div className="phone-field"><span className="field-icon">⌕</span><span className="country-prefix">+47</span><span className="prefix-divider" /><input id="mobile" inputMode="tel" autoComplete="tel-national" placeholder="4xx xx xxx" value={mobile} onChange={(event) => setMobile(event.target.value)} disabled={phase === "waiting"} /></div>
+            <div className="phone-field"><span className="field-icon">⌕</span><span className="country-prefix">+47</span><span className="prefix-divider" /><input id="mobile" inputMode="tel" autoComplete="tel-national" placeholder="4xx xx xxx" value={mobile} onChange={(event) => setMobile(event.target.value.replace(/^\s*(?:\+47|0047)\s*/, ""))} disabled={phase === "waiting" || busy} /></div>
 
             {phase === "form" ? <>
-              <button className="primary-button" type="button" disabled={!tenant || !mobile.trim()} onClick={() => { setNotice(""); setPhase("waiting"); }}>Fortsett med Vipps <span aria-hidden="true">→</span></button>
+              <button className="primary-button" type="button" disabled={!tenant || !mobile.trim() || busy} onClick={beginFlow}>{busy ? "Starter forespørsel …" : "Fortsett med Vipps"} <span aria-hidden="true">→</span></button>
               <div className="provider-row"><span className="vipps-chip"><b>V</b> Vipps</span><span className="provider-soon">BankID <small>Kommer senere</small></span></div>
               <p className="form-footnote"><span>♧</span> Vi sammenligner nummeret med organisasjonens kontoopplysninger.</p>
             </> : <div className="simulation-panel">
@@ -151,7 +165,7 @@ export function Demo() {
                 <button className="approve-button" type="button" disabled={busy} onClick={() => startSimulation("approved")}>✓ &nbsp; Simuler godkjenning</button>
                 <button className="reject-button" type="button" disabled={busy} onClick={() => startSimulation("denied")}>Simuler avvisning</button>
               </>}
-              <button className="text-button" type="button" onClick={closeFlow}>Avbryt</button>
+              <button className="text-button" type="button" disabled={busy} onClick={closeFlow}>Avbryt</button>
             </div>}
           </>}
 
@@ -186,6 +200,6 @@ export function Demo() {
       </div>
     </section>
 
-    <footer className="footer"><span>© 2026 idcheck</span><span>Kontogjenoppretting med personvern i sentrum</span><a href="mailto:it@example.invalid">Trenger du hjelp?</a></footer>
+    <footer className="footer"><span>© 2026 idcheck</span><span>Kontogjenoppretting med personvern i sentrum</span><span>Trenger du hjelp? Kontakt IT-avdelingen.</span></footer>
   </main>;
 }

@@ -3,7 +3,9 @@ CREATE TABLE IF NOT EXISTS attempts (
   tenant_id uuid NOT NULL,
   phone_hash text NOT NULL,
   ip_hash text NOT NULL,
-  outcome text NOT NULL CHECK (outcome IN ('started','rejected','verified','issued','expired','unknown')),
+  simulation_token_hash text NOT NULL UNIQUE,
+  outcome text NOT NULL CHECK (outcome IN ('started','verifying','rejected','verified','issued','expired','unknown')),
+  reason_code text,
   created_at timestamptz NOT NULL DEFAULT now(),
   finished_at timestamptz
 );
@@ -33,3 +35,11 @@ CREATE TABLE IF NOT EXISTS notification_outbox (
   sent_at timestamptz
 );
 CREATE INDEX IF NOT EXISTS notification_outbox_queue_idx ON notification_outbox (status,next_attempt_at,id);
+
+CREATE TABLE IF NOT EXISTS admin_consent_states (
+  state_hash text PRIMARY KEY,
+  tenant_id uuid NOT NULL,
+  expires_at timestamptz NOT NULL,
+  consumed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);

@@ -8,6 +8,9 @@ function equalSecret(left: string, right: string): boolean {
 
 export function proxy(request: NextRequest) {
   if (process.env.NODE_ENV !== "production") return NextResponse.next();
+  // Microsoft redirects an administrator's browser here after granting consent.
+  // The callback has a one-use DB state and independently checks live Graph permissions.
+  if (request.nextUrl.pathname === "/api/admin/consent-callback") return NextResponse.next();
   const username = process.env.APP_ACCESS_USER;
   const password = process.env.APP_ACCESS_PASSWORD;
   if (!username || !password || username.length < 3 || password.length < 20) return new NextResponse("Application access is not configured.", { status: 503 });

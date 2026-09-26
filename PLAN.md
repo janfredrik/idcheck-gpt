@@ -1,6 +1,6 @@
 # idcheck — implementeringsplan
 
-Status: Planlegging. Ingen applikasjonskode er skrevet.
+Status: Implementering pågår. Kjerneflyten, Entra Graph-adapteren, ekte TAP-utstedelse, revisjons-/varslingskø, Docker Compose og GHCR-workflow er kodet. Lokal produksjonsbygging passerer. Demoen er ikke koblet mot en faktisk Entra-tenant ennå; konfigurasjon og tenanttest gjenstår.
 
 ## Mål for første leveranse
 

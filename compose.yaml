@@ -52,6 +52,7 @@ services:
       ENTRA_CLIENT_SECRET: ${ENTRA_CLIENT_SECRET:-}
       RATE_LIMIT_HMAC_KEY: ${RATE_LIMIT_HMAC_KEY:-}
       ALERT_EMAIL: ${ALERT_EMAIL:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       APP_ACCESS_USER: ${APP_ACCESS_USER:-}
       APP_ACCESS_PASSWORD: ${APP_ACCESS_PASSWORD:-}
     ports:
@@ -70,7 +71,10 @@ services:
     init: true
     command: ["npm", "run", "worker"]
     environment:
-      <<: *runtime-environment
+      NODE_ENV: production
+      DATABASE_URL: postgres://idcheck:${POSTGRES_PASSWORD}@db:5432/idcheck
+      DATABASE_SSL: "false"
+      ALERT_EMAIL: ${ALERT_EMAIL:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}

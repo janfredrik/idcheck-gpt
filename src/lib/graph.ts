@@ -25,7 +25,7 @@ async function collect<T>(url: string, accessToken: string, maximumPages = 50): 
   const results: T[] = []; let next: string | undefined = url; let pages = 0;
   while (next) {
     if (++pages > maximumPages) throw new Error("GRAPH_RESULT_LIMIT");
-    const page = await getJson<GraphPage<T>>(next, accessToken);
+    const page: GraphPage<T> = await getJson<GraphPage<T>>(next, accessToken);
     if (!Array.isArray(page.value)) throw new Error("GRAPH_RESULT_INVALID");
     results.push(...page.value); if (results.length > 10000) throw new Error("GRAPH_RESULT_LIMIT");
     next = page["@odata.nextLink"];
@@ -38,18 +38,34 @@ function graphUrl(path: string, params?: Record<string, string>): string {
   return url.toString();
 }
 
-export async function findUniqueMobileMatch(mobile: string): Promise<GraphUser | null> {
+export async function findUniqueMobileMatch(mobile: string): Promise<{ user: GraphUser | null; reason: string }> {
   const config = getDemoConfig(); if (!config) throw new Error("CONFIG_INVALID");
   const accessToken = await token(); const escaped = mobile.replaceAll("'", "''");
   const users = await collect<GraphUser>(graphUrl("users", { "$filter": `mobilePhone eq '${escaped}'`, "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType", "$top": "100" }), accessToken, 3);
   const exactMatches = users.filter((user) => user.mobilePhone === mobile);
-  return exactMatches.length === 1 ? exactMatches[0] : null;
+  return exactMatches.length === 1 ? { user: exactMatches[0], reason: "MATCHED" } : { user: null, reason: exactMatches.length ? "AMBIGUOUS_MATCH" : "NO_MATCH" };
 }
 
 export async function getUserById(userId: string): Promise<GraphUser | null> {
   const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) return null;
   const accessToken = await token();
   return getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id,userPrincipalName,mobilePhone,accountEnabled,userType" }), accessToken);
+}
+
+export async function checkRequiredDemoPermissions(): Promise<void> {
+  const config = getDemoConfig(); if (!config) throw new Error("CONFIG_INVALID");
+  const freshClient = new ConfidentialClientApplication({ auth: { clientId: config.appClientId, authority: `https://login.microsoftonline.com/${config.tenantId}`, clientSecret: config.appClientSecret } });
+  const result = await freshClient.acquireTokenByClientCredential({ scopes: ["https://graph.microsoft.com/.default"] });
+  if (!result?.accessToken) throw new Error("GRAPH_AUTH_FAILED");
+  const parts = result.accessToken.split(".");
+  if (parts.length !== 3) throw new Error("GRAPH_TOKEN_INVALID");
+  const claims = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as { tid?: string; aud?: string; exp?: number; roles?: string[] };
+  const graphAudiences = new Set(["https://graph.microsoft.com", "00000003-0000-0000-c000-000000000000"]);
+  const requiredRoles = ["User.Read.All", "UserAuthMethod-TAP.ReadWrite.All", "Policy.Read.AuthenticationMethod", "RoleManagement.Read.Directory", "RoleEligibilitySchedule.Read.Directory"];
+  if (claims.tid?.toLowerCase() !== config.tenantId.toLowerCase() || !claims.aud || !graphAudiences.has(claims.aud) || !claims.exp || claims.exp * 1000 <= Date.now() || !requiredRoles.every((role) => claims.roles?.includes(role))) throw new Error("GRAPH_PERMISSION_MISSING");
+  const userId = [...config.allowedUserIds][0];
+  const user = await getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id" }), result.accessToken);
+  if (user.id.toLowerCase() !== userId.toLowerCase()) throw new Error("GRAPH_USER_CHECK_FAILED");
 }
 
 export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
