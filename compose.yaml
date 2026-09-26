@@ -17,8 +17,7 @@ services:
       start_period: 10s
 
   migrate:
-    image: ${IDCHECK_IMAGE:-idcheck:local}
-    build: .
+    image: ${IDCHECK_IMAGE:-ghcr.io/janfredrik/idcheck-gpt:latest}
     restart: "no"
     command: ["npm", "run", "db:migrate"]
     environment:
@@ -31,8 +30,7 @@ services:
     networks: [idcheck-internal]
 
   web:
-    image: ${IDCHECK_IMAGE:-idcheck:local}
-    build: .
+    image: ${IDCHECK_IMAGE:-ghcr.io/janfredrik/idcheck-gpt:latest}
     restart: unless-stopped
     init: true
     read_only: true
@@ -65,8 +63,7 @@ services:
     networks: [idcheck-internal, idcheck-egress]
 
   notifications:
-    image: ${IDCHECK_IMAGE:-idcheck:local}
-    build: .
+    image: ${IDCHECK_IMAGE:-ghcr.io/janfredrik/idcheck-gpt:latest}
     restart: unless-stopped
     init: true
     command: ["npm", "run", "worker"]
