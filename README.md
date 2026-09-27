@@ -11,7 +11,7 @@ Selvbetjent kontogjenoppretting for Microsoft Entra ID. Første versjon er avgre
 - Ekte Graph-oppslag, fast tenant, testkonto-allowlist, gruppekrav, TAP-policy og fail-closed kontroll av aktive katalogroller. PIM-berettigelser kontrolleres ikke i denne demoen.
 - Ekte 60-minutters engangs-TAP, vist kun i opprinnelig svar. TAP-verdien vises ikke igjen og sendes aldri på e-post.
 - PostgreSQL for sesjoner, engangsutstedelse, rate limiting, revisjon og varslingskø.
-- SMTP-varsler til IT ved forsøk og en egen sikkerhetsmelding til brukerens `mail`-adresse når TAP opprettes. Ingen e-post inneholder TAP-verdien.
+- SMTP-varsler til IT ved forsøk og en egen sikkerhetsmelding til brukerens `mail`-adresse når TAP opprettes. Valgfritt SMS-varsel via Pling kan sendes til samme mobilnummer. Ingen varsler inneholder TAP-verdien.
 - Docker Compose for Unraid og GitHub Actions for GHCR-image.
 
 Ekte Vipps, BankID/Signicat, produksjonstenants og adminpanel er ikke med ennå.
@@ -73,6 +73,7 @@ Kopier `.env.example` til `.env` på serveren. Ikke legg `.env` i Git eller i im
 - `RATE_LIMIT_HMAC_KEY` med minst 32 tilfeldige bytes; generer med `openssl rand -hex 32`.
 - Sterke, tilfeldige `POSTGRES_PASSWORD` og `APP_ACCESS_PASSWORD`. Heksadesimale passord for PostgreSQL unngår URL-escaping-problemer.
 - SMTP-innstillinger. Varslingsarbeideren krever SMTP for å starte.
+- Valgfritt: sett `SMS_SEND_ENABLED=true` og legg nettlesersesjonen fra Pling i `PLING_SESSION_COOKIE`. Når den er `false`, køes eller sendes ingen SMS. Konto-ID (`13144`) og avsender (`Vivicta`) er fastlåst i koden. Cookie er en innloggingshemmelighet og skal bare ligge i `.env` på serveren.
 
 `.env.example` inneholder ingen fungerende tenant-ID eller hemmelighet. Ufullstendig konfigurasjon deaktiverer demoflyten. I produksjon kreves `APP_ACCESS_USER` og et passord på minst 20 tegn.
 
@@ -110,9 +111,9 @@ Etter første publisering, velg synlighet for pakken under GitHub Packages. Unra
 - Serveren er fastlåst til én tenant og ignorerer ikke en mismatch mellom tenant-ID i request og konfigurasjon.
 - Krev eksakt, entydig `mobilePhone`-match. Duplikater og manglende treff avvises likt.
 - Kontoen må være aktiv, intern, allowlistet, medlem av `idcheck-enabled`, omfattet av TAP-policyen og uten aktive Entra-roller. PIM-berettigelser kontrolleres ikke i denne demoversjonen fordi demotenanten mangler P2/Governance-lisens; ikke bruk oppsettet i en tenant der PIM-berettigelser er i bruk.
-- Graph-feil gir avvisning. Mobilnummer lagres ikke; revisjon og rate limiting bruker HMAC-referanser.
+- Graph-feil gir avvisning. Mobilnummer lagres ikke i revisjon eller rate limiting, som bruker HMAC-referanser. Når SMS er aktivert, beholdes nummeret midlertidig i varslingskøen fram til ett sende-forsøk og redigeres deretter bort.
 - TAP opprettes etter eksplisitt klikk. DB-lås serialiserer utstedelse per konto; et uavklart Graph-resultat forsøkes ikke automatisk på nytt.
-- TAP vises én gang, med `no-store`, og går aldri i PostgreSQL eller e-post. Når det finnes en gyldig e-postadresse i `mail`-attributtet, legges et varsel til brukeren i SMTP-køen. Varselet ber brukeren kontakte IT hvis de ikke ba om koden; e-postadressen fjernes fra kø-raden etter vellykket sending.
+- TAP vises én gang, med `no-store`, og går aldri i PostgreSQL, e-post eller SMS. Når det finnes en gyldig e-postadresse i `mail`-attributtet, legges et varsel til brukeren i SMTP-køen. Hvis SMS er aktivert, legges et tilsvarende varsel til mobilnummeret i køen. Meldingen sier at TAP-en ble opprettet, men inneholder ikke koden. SMS får ett sende-forsøk fordi Pling-kallet ikke har en idempotensnøkkel; dette begrenser risikoen for fakturerte duplikater. Mottakerdata redigeres bort fra kø-raden etter forsøket.
 - CSRF-token, Origin-kontroll, `SameSite=Strict` og sikkerhetsheadere beskytter utstedelsesflyten.
 - Forsøk registreres og varsel legges i kø før ventesiden vises. Avbrutte og utløpte forsøk varsles også.
 

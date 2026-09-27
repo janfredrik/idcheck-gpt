@@ -53,6 +53,7 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       APP_ACCESS_USER: ${APP_ACCESS_USER:-}
       APP_ACCESS_PASSWORD: ${APP_ACCESS_PASSWORD:-}
+      SMS_SEND_ENABLED: ${SMS_SEND_ENABLED:-false}
     ports:
       - "127.0.0.1:${IDCHECK_PORT:-3000}:3000"
     depends_on:
@@ -78,6 +79,8 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
+      SMS_SEND_ENABLED: ${SMS_SEND_ENABLED:-false}
+      PLING_SESSION_COOKIE: ${PLING_SESSION_COOKIE:-}
     depends_on:
       migrate:
         condition: service_completed_successfully

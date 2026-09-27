@@ -1,10 +1,13 @@
 "use client";
 
 import QRCode from "qrcode";
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 type Tenant = { id: string; name: string };
-type Phase = "loading" | "setup" | "form" | "waiting" | "eligible" | "tap" | "done" | "failed";
+type Phase = "loading" | "setup" | "home" | "form" | "waiting" | "eligible" | "tap" | "done" | "failed";
+
+const displayTenantName = "Dark Knight";
 
 const genericError = "Vi kunne ikke bekrefte identiteten din automatisk, kontakt IT-avdelingen.";
 const guidePages = [
@@ -38,10 +41,7 @@ function AuthenticatorPhone({ children }: { children: React.ReactNode }) {
 
 export function Demo() {
   const [phase, setPhase] = useState<Phase>("loading");
-  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [search, setSearch] = useState("");
-  const [listOpen, setListOpen] = useState(false);
   const [mobile, setMobile] = useState("");
   const [attemptToken, setAttemptToken] = useState("");
   const [csrf, setCsrf] = useState("");
@@ -61,7 +61,7 @@ export function Demo() {
     fetch("/api/config", { cache: "no-store" }).then((response) => response.json()).then((config) => {
       if (!active) return;
       if (!config.enabled || !Array.isArray(config.tenants) || !config.tenants.length) { setPhase("setup"); return; }
-      setTenants(config.tenants); setPhase("form");
+      setTenant(config.tenants[0]); setPhase("home");
     }).catch(() => { if (active) setPhase("setup"); });
     return () => { active = false; };
   }, []);
@@ -84,8 +84,6 @@ export function Demo() {
   }, [phase, expiresAt]);
 
   useEffect(() => { if (phase === "tap") setGuideStep(0); }, [phase]);
-
-  const filteredTenants = useMemo(() => tenants.filter((item) => item.name.toLocaleLowerCase("no").includes(search.toLocaleLowerCase("no"))), [tenants, search]);
 
   async function beginFlow() {
     if (!tenant || busy) return;
@@ -127,10 +125,10 @@ export function Demo() {
   }
 
   async function closeFlow() {
-    setTap(""); setCsrf(""); setMobile(""); setAccount(""); setNotice(""); setTenant(null); setSearch(""); setGuideStep(0); setEmailNoticeQueued(false); setReference("");
+    setTap(""); setCsrf(""); setMobile(""); setAccount(""); setNotice(""); setGuideStep(0); setEmailNoticeQueued(false); setReference("");
     await fetch("/api/session", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attemptToken }), cache: "no-store" }).catch(() => undefined);
     setAttemptToken("");
-    setPhase(tenants.length ? "form" : "setup");
+    setPhase(tenant ? "home" : "setup");
   }
 
   function moveGuide(direction: -1 | 1) {
@@ -140,6 +138,7 @@ export function Demo() {
   const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const seconds = String(secondsLeft % 60).padStart(2, "0");
   const isTap = phase === "tap";
+  const isLanding = phase === "home";
 
   return <main className={`shell${isTap ? " shell-guide" : ""}`}>
     <div className="aurora aurora-one" aria-hidden="true" />
@@ -152,14 +151,30 @@ export function Demo() {
       <div className="secure-label"><span className="lock-icon">⌑</span> Sikker kontogjenoppretting</div>
     </header>
 
-    <section className={`hero${isTap ? " hero-guide" : ""}`}>
+    <section className={`hero${isTap ? " hero-guide" : ""}${isLanding ? " hero-landing" : ""}`}>
+      {isLanding && <div className="landing-panel">
+        <div className="landing-copy">
+          <span className="landing-eyebrow"><i /> SELVBETJENT KONTOGJENOPPRETTING</span>
+          <h1>idcheck identifiserer deg for å gi deg tilgang til kontoen din</h1>
+        </div>
+        <div className="landing-action">
+          <div className="tenant-identity">
+            <Image src="/dark-knight.png" alt="Dark Knight-logo" width={84} height={84} priority />
+            <div><span>DEMOTENANT</span><strong>{displayTenantName}</strong></div>
+            <span className="tenant-fixed" aria-label="Fast organisasjon">✓</span>
+          </div>
+          <p>Bekreft identiteten din med Vipps for å få en engangskode til kontoen.</p>
+          <button className="primary-button landing-button" type="button" onClick={() => setPhase("form")}>Start nå <span aria-hidden="true">→</span></button>
+        </div>
+      </div>}
+      {!isLanding && <>
       <div className="stage-heading">
         <div>
-          <span className="stage-eyebrow">{phase === "tap" ? "KONTOGJENOPPRETTING · STEG 3" : phase === "eligible" ? "KONTOGJENOPPRETTING · STEG 2" : "KONTOGJENOPPRETTING · STEG 1"}</span>
-          <h1>{phase === "tap" ? "Sett opp Authenticator" : phase === "eligible" ? "Identiteten er bekreftet" : phase === "done" ? "Forespørselen er avsluttet" : "Få tilgang til kontoen"}</h1>
+          <span className="stage-eyebrow">{phase === "tap" ? "KONTOGJENOPPRETTING · STEG 3" : phase === "eligible" ? "KONTOGJENOPPRETTING · STEG 2" : phase === "done" ? "KONTOGJENOPPRETTING · FERDIG" : "KONTOGJENOPPRETTING · STEG 1"}</span>
+          <h1>{phase === "tap" ? "Sett opp Authenticator" : phase === "eligible" ? "Identiteten er bekreftet" : phase === "done" ? "Forespørselen er avsluttet" : phase === "form" || phase === "waiting" ? "Skriv inn Vipps-nummeret ditt" : "Få tilgang til kontoen"}</h1>
         </div>
         <div className="steps-rail" aria-label="Steg i gjenopprettingen">
-          <span className={phase === "form" || phase === "waiting" ? "rail-active" : "rail-done"}><i>1</i> Identitet</span><b />
+          <span className={phase === "form" || phase === "waiting" ? "rail-active" : phase === "eligible" || isTap || phase === "done" ? "rail-done" : ""}><i>1</i> Identitet</span><b />
           <span className={phase === "eligible" ? "rail-active" : ["tap", "done"].includes(phase) ? "rail-done" : ""}><i>2</i> Bekreftelse</span><b />
           <span className={isTap ? "rail-active" : phase === "done" ? "rail-done" : ""}><i>3</i> Ny sikkerhetsmetode</span>
         </div>
@@ -167,22 +182,15 @@ export function Demo() {
 
       <div className={`card-wrap${isTap ? " tap-wrap" : ""}`}>
         <section className={`recovery-card${isTap ? " is-tap" : ""}`}>
-          {phase === "loading" && <div className="loading-state"><span className="spinner" /> Henter organisasjoner …</div>}
+          {phase === "loading" && <div className="loading-state"><span className="spinner" /> Klargjør sikker tilkobling …</div>}
 
           {phase === "setup" && <div className="simple-state"><div className="result-icon">i</div><h2>Demomiljøet klargjøres</h2><p>Organisasjonen er ikke konfigurert ennå. Ta kontakt med IT-avdelingen.</p></div>}
 
           {(phase === "form" || phase === "waiting") && <div className="form-layout">
             <div className="form-main">
-              <div className="card-head"><div><div className="card-kicker">BEKREFT KONTOEN DIN</div><h2>Velg organisasjon og mobilnummer</h2></div><span className="step-badge">01 / 03</span></div>
-              <label className="field-label" htmlFor="org">ORGANISASJON</label>
-              <div className="combobox-wrap">
-                <span className="field-icon">⌂</span>
-                <input id="org" role="combobox" aria-expanded={listOpen} aria-controls="org-list" aria-autocomplete="list" autoComplete="off" placeholder="Søk etter organisasjon" value={tenant?.name ?? search} disabled={phase === "waiting" || busy} onFocus={() => setListOpen(true)} onChange={(event) => { setTenant(null); setSearch(event.target.value); setListOpen(true); }} onKeyDown={(event) => { if (event.key === "Escape") setListOpen(false); if (event.key === "Enter" && filteredTenants.length === 1) { setTenant(filteredTenants[0]); setSearch(""); setListOpen(false); } }} />
-                <span className="chevron">⌄</span>
-                {listOpen && <div className="tenant-list" id="org-list" role="listbox">{filteredTenants.length ? filteredTenants.map((item) => <button key={item.id} type="button" role="option" aria-selected={tenant?.id === item.id} onMouseDown={(event) => event.preventDefault()} onClick={() => { setTenant(item); setSearch(""); setListOpen(false); }}>{item.name}<span>↗</span></button>) : <div className="no-results">Ingen treff. Kontroller skrivemåten.</div>}</div>}
-              </div>
-
-              <label className="field-label phone-label" htmlFor="mobile">MOBILNUMMER</label>
+              <div className="card-head"><div><div className="card-kicker">BEKREFT KONTOEN DIN</div><h2>Skriv inn nummeret du bruker i Vipps</h2></div><span className="step-badge">01 / 03</span></div>
+              <div className="tenant-mini"><Image src="/dark-knight.png" alt="" width={36} height={36} /><span>{displayTenantName}</span><i>Demotenant</i></div>
+              <label className="field-label phone-label" htmlFor="mobile">VIPPS-NUMMER</label>
               <div className="phone-field"><span className="field-icon">⌕</span><span className="country-prefix">+47</span><span className="prefix-divider" /><input id="mobile" inputMode="tel" autoComplete="tel-national" placeholder="4xx xx xxx" value={mobile} onChange={(event) => setMobile(event.target.value.replace(/^\s*(?:\+47|0047)\s*/, ""))} disabled={phase === "waiting" || busy} /></div>
 
               {phase === "form" ? <>
@@ -280,6 +288,7 @@ export function Demo() {
           {phase === "done" && <div className="simple-state done-block"><div className="result-icon success-icon">✓</div><h2>Forespørselen er avsluttet</h2><p>{notice || "Engangskoden vises ikke igjen."}</p><button className="primary-button" type="button" onClick={closeFlow}>Tilbake til start <span aria-hidden="true">→</span></button></div>}
         </section>
       </div>
+      </>}
     </section>
   </main>;
 }
