@@ -6,10 +6,10 @@ Selvbetjent kontogjenoppretting for Microsoft Entra ID. Første versjon er avgre
 
 ## Innhold
 
-- Norsk, mobiltilpasset gjenopprettingsflyt med organisasjonssøk, stor arbeidsflate og bla-gjennom-guide for Microsoft Authenticator. Guiden har QR-koder til App Store og Google Play.
+- Norsk, mobiltilpasset gjenopprettingsflyt med organisasjonssøk, stor arbeidsflate og bla-gjennom-guide for å sette opp en passkey direkte i Microsoft Authenticator med TAP. Guiden har QR-koder til App Store og Google Play.
 - Simulert Vipps-godkjenning/avvisning; BankID er deaktivert.
 - Ekte Graph-oppslag, fast tenant, testkonto-allowlist, gruppekrav, TAP-policy og fail-closed kontroll av aktive katalogroller. PIM-berettigelser kontrolleres ikke i denne demoen.
-- Ekte 60-minutters engangs-TAP, vist kun i opprinnelig svar.
+- Ekte 60-minutters engangs-TAP, vist kun i opprinnelig svar. TAP-verdien vises ikke igjen og sendes aldri på e-post.
 - PostgreSQL for sesjoner, engangsutstedelse, rate limiting, revisjon og varslingskø.
 - SMTP-varsler til IT ved forsøk og en egen sikkerhetsmelding til brukerens `mail`-adresse når TAP opprettes. Ingen e-post inneholder TAP-verdien.
 - Docker Compose for Unraid og GitHub Actions for GHCR-image.
@@ -55,7 +55,9 @@ Gå til **Entra ID → Authentication methods → Policies → Temporary Access 
 
 - Aktiver metoden og inkluder `idcheck-enabled`.
 - Kontroller at policyen tillater 60 minutter og engangsbruk.
-- Test at kontoen kan logge inn med TAP og registrere ny MFA-metode under tenantens Conditional Access-regler.
+- For passkey i Authenticator: aktiver **Passkey (FIDO2)**, opprett en profil som tillater Microsoft Authenticator og målrett profilen mot testgruppen. Følg [Microsofts oppsett for Authenticator-passkeys](https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-enable-authenticator-passkey).
+- Kontroller at Conditional Access lar testkontoen registrere sikkerhetsinformasjon og bruke TAP til passkey-registreringen.
+- Test at kontoen kan logge inn i Authenticator med TAP og opprette en passkey. Mobilkravene er iOS 17+ eller Android 14+; se [Microsofts mobilveiledning](https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-register-passkey-authenticator).
 
 idcheck endrer ikke Entra-policyer eller grupper automatisk. Ukjent eller utilstrekkelig oppsett gir avvisning.
 

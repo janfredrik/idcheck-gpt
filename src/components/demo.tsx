@@ -9,10 +9,11 @@ type Phase = "loading" | "setup" | "form" | "waiting" | "eligible" | "tap" | "do
 const genericError = "Vi kunne ikke bekrefte identiteten din automatisk, kontakt IT-avdelingen.";
 const guidePages = [
   { title: "Installer Microsoft Authenticator", eyebrow: "FØR DU BEGYNNER" },
-  { title: "Logg inn med jobbbrukeren din", eyebrow: "1 · BRUKERNAVN" },
-  { title: "Skriv inn engangskoden", eyebrow: "2 · TEMPORARY ACCESS PASS" },
-  { title: "Velg Authenticator app", eyebrow: "3 · SIKKERHETSINFORMASJON" },
-  { title: "Skann QR-koden og fullfør", eyebrow: "4 · REGISTRER APPEN" },
+  { title: "Legg til jobb- eller skolekonto", eyebrow: "1 · LEGG TIL KONTO" },
+  { title: "Logg inn med jobbbrukeren din", eyebrow: "2 · BRUKERNAVN" },
+  { title: "Bruk engangskoden", eyebrow: "3 · TEMPORARY ACCESS PASS" },
+  { title: "Opprett passkey i Authenticator", eyebrow: "4 · OPPRETT PASSKEY" },
+  { title: "Aktiver passkey på mobilen", eyebrow: "5 · FULLFØR OPPSETTET" },
 ];
 
 function StoreQr({ href, label }: { href: string; label: string }) {
@@ -31,8 +32,8 @@ function StoreQr({ href, label }: { href: string; label: string }) {
   </a>;
 }
 
-function MiniBrowser({ children }: { children: React.ReactNode }) {
-  return <div className="mini-browser" aria-hidden="true"><div className="browser-bar"><i /><i /><i /><span>mysignins.microsoft.com/security-info</span></div>{children}</div>;
+function AuthenticatorPhone({ children }: { children: React.ReactNode }) {
+  return <div className="app-phone" aria-hidden="true"><div className="app-notch" /><div className="app-toolbar"><span>Authenticator</span><b>＋</b></div><div className="app-screen">{children}</div><div className="app-home-indicator" /></div>;
 }
 
 export function Demo() {
@@ -222,7 +223,7 @@ export function Demo() {
               <div className="expiry-track"><span style={{ width: `${Math.max(0, secondsLeft / 3600 * 100)}%` }} /></div>
               {notice && <p className="copy-notice" role="status">{notice}</p>}
               <div className="mail-notice"><span aria-hidden="true">✉</span><p>{emailNoticeQueued ? "Varsel er lagt i kø til e-postadressen i kontoen. Selve koden sendes aldri på e-post." : "Fant ingen gyldig e-postadresse i kontoen. Kontakt IT hvis du trenger varsel på e-post."}</p></div>
-              <p className="tap-warning">Engangskoden kan bare brukes én gang. Hvis du ikke ba om den, kontakt IT-avdelingen.</p>
+              <p className="tap-warning">Engangskoden kan bare brukes én gang.</p>
               <button className="text-button" type="button" onClick={() => { setTap(""); setPhase("done"); }}>Ferdig — fjern koden fra skjermen</button>
             </aside>
 
@@ -240,23 +241,32 @@ export function Demo() {
                 </div>}
 
                 {guideStep === 1 && <div className="instruction-slide">
-                  <div className="slide-visual"><MiniBrowser><div className="mock-signin"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Logg på</strong><span>Jobb- eller skolekonto</span><div className="mock-input">navn@firma.no</div><div className="mock-next">Neste <b>→</b></div></div></MiniBrowser></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Bruk jobb-e-postadressen din</h3><p>Åpne <a href="https://mysignins.microsoft.com/security-info" target="_blank" rel="noopener noreferrer">Sikkerhetsinformasjon</a>. Skriv inn brukernavnet (UPN) du bruker på jobb, og velg <strong>Neste</strong>.</p><span className="guide-tip">Bruk hele adressen, for eksempel navn@firma.no.</span></div>
+                  <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="add-account-screen"><div className="phone-illustration"><span>✦</span><i>＋</i></div><p>La oss legge til din første konto!</p><button>Legg til konto</button><small>Jobb- eller skolekonto</small></div></AuthenticatorPhone></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Start i Authenticator</h3><p>Åpne appen og trykk <strong>＋</strong> øverst. Velg <strong>Jobb- eller skolekonto</strong>, og trykk <strong>Logg på</strong>.</p><span className="guide-tip">Har du ikke lagt til en konto før, kan du også trykke «Legg til jobb- eller skolekonto» på startsiden.</span></div>
                 </div>}
 
                 {guideStep === 2 && <div className="instruction-slide">
-                  <div className="slide-visual"><MiniBrowser><div className="mock-signin mock-tap"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Skriv inn passordet</strong><span>Bruk en midlertidig tilgangskode</span><div className="mock-input mock-code"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="mock-next">Logg på <b>→</b></div></div></MiniBrowser></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Bruk koden som vises her</h3><p>Velg alternativet for midlertidig tilgangskode og skriv inn TAP-en fra feltet til venstre. Koden er engangsbruk.</p><span className="guide-tip warning-tip">Ikke lukk denne siden før du er logget inn og har kopiert koden.</span></div>
+                  <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="app-signin-screen"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Logg på</strong><span>Jobb- eller skolekonto</span><div className="app-input">navn@firma.no</div><div className="app-blue-button">Neste <b>→</b></div></div></AuthenticatorPhone></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skriv inn jobbbrukeren din</h3><p>Skriv inn hele jobb-e-postadressen (UPN) du bruker til Microsoft 365, for eksempel <strong>navn@firma.no</strong>.</p><span className="guide-tip">Bruk kontoen som fikk engangskoden.</span></div>
                 </div>}
 
                 {guideStep === 3 && <div className="instruction-slide">
-                  <div className="slide-visual"><MiniBrowser><div className="mock-security"><div className="security-top"><span>My Sign-ins</span><b>JD</b></div><strong>Sikkerhetsinformasjon</strong><div className="security-row"><span>＋</span><div><b>Legg til påloggingsmetode</b><small>Authenticator app</small></div><i>›</i></div><div className="security-row muted-row"><span>✓</span><div><b>Authenticator app</b><small>Microsoft Authenticator</small></div></div></div></MiniBrowser></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Legg til en ny metode</h3><p>Etter innlogging åpnes Sikkerhetsinformasjon. Velg <strong>Legg til påloggingsmetode</strong>, deretter <strong>Authenticator app</strong> og <strong>Legg til</strong>.</p><span className="guide-tip">La nettleservinduet stå åpent — du skal snart skanne en QR-kode.</span></div>
+                  <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="app-signin-screen app-tap-screen"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Midlertidig tilgangskode</strong><span>Logg på med engangskoden</span><div className="app-input tap-dots"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="app-blue-button">Logg på <b>→</b></div></div></AuthenticatorPhone></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Logg inn med TAP</h3><p>Velg <strong>Midlertidig tilgangskode</strong> som innloggingsmåte hvis du blir spurt. Skriv inn koden fra feltet til venstre.</p><span className="guide-tip warning-tip">TAP-en kan bare brukes én gang. Fortsett oppsettet med en gang.</span></div>
                 </div>}
 
                 {guideStep === 4 && <div className="instruction-slide">
-                  <div className="slide-visual final-visual"><div className="mock-phone"><div className="phone-notch" /><div className="phone-app-head"><span>Authenticator</span><b>＋</b></div><div className="phone-art"><span>✦</span><i>＋</i></div><strong>Legg til konto</strong><p>Jobb- eller skolekonto</p><div className="phone-scan"><span className="scan-corner corner-a" /><span className="scan-corner corner-b" /><span className="scan-corner corner-c" /><span className="scan-corner corner-d" /><b>Skann QR-koden<br />fra nettleseren</b></div><div className="phone-done">Konto lagt til <span>✓</span></div></div><div className="scan-arrow" aria-hidden="true">↗</div><div className="qr-placeholder"><span>QR</span><small>fra sikkerhetsinformasjon</small></div></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skann og bekreft kontoen</h3><p>I Authenticator: trykk <strong>＋</strong> → <strong>Jobb- eller skolekonto</strong> → <strong>Skann QR-kode</strong>. Skann koden som vises i nettleseren, og fullfør bekreftelsen.</p><span className="guide-tip warning-tip">Fullfør med en gang. Engangs-TAP kan ikke brukes på nytt, og registrering kan måtte fullføres innen 10 minutter.</span><a className="help-link" href="https://learn.microsoft.com/en-us/entra/identity/authentication/howto-authentication-temporary-access-pass" target="_blank" rel="noopener noreferrer">Microsofts veiledning ↗</a></div>
+                  <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="account-added-screen"><div className="account-shield">✓</div><small>KONTO LAGT TIL</small><strong>Jobb- eller skolekonto</strong><div className="passkey-action"><span>◉</span><div><b>Opprett en passkey</b><small>Face ID, fingeravtrykk eller PIN</small></div><i>›</i></div><div className="app-blue-button">Opprett passkey <b>→</b></div></div></AuthenticatorPhone></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Opprett passkey i appen</h3><p>Når kontoen er lagt til, åpne kontoen i Authenticator og trykk <strong>Opprett en passkey</strong>. Følg instruksjonene for å lagre passkey med Face ID, fingeravtrykk eller skjermlås.</p><span className="guide-tip">Hvis «Opprett en passkey» ikke vises, må IT aktivere passkeys for kontoen i Entra.</span></div>
+                </div>}
+
+                {guideStep === 5 && <div className="instruction-slide provider-slide">
+                  <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="provider-screen"><div className="provider-icon">✓</div><strong>Passkey klar</strong><span>Authenticator er valgt som passkey-leverandør</span><div className="provider-toggle"><span>Authenticator</span><b>På</b><i>✓</i></div><small>Passkey lagres trygt på denne enheten</small></div></AuthenticatorPhone></div>
+                  <div className="instruction-copy provider-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Slå på støtte på enheten</h3>
+                    <div className="platform-steps"><div><strong>iPhone</strong><p>Krever iOS 17+. I Authenticator åpne <strong>Innstillinger</strong> og aktiver appen som passkey-leverandør. I iPhone-innstillinger: slå på Autofyll for passord og passkeys, og velg Authenticator.</p></div><div><strong>Android</strong><p>Krever Android 14+. Aktiver Authenticator som passkey-leverandør. Hvis du blir sendt til enhetsinnstillingene, velg Authenticator under <strong>Passord og kontoer → Flere leverandører</strong>.</p></div></div>
+                    <span className="guide-tip warning-tip">Passkey-registrering må være aktivert av IT. Fullfør registreringen med en gang etter TAP-innlogging.</span>
+                    <a className="help-link" href="https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-register-passkey-authenticator" target="_blank" rel="noopener noreferrer">Microsofts mobilveiledning ↗</a>
+                  </div>
                 </div>}
               </div>
               <div className="guide-controls">
