@@ -81,8 +81,10 @@ h1{margin:27px 0 19px;color:#f6fafb;font-family:"Avenir Next","Segoe UI",sans-se
 .app-icon-large>img{width:137%!important;height:137%!important;max-width:none;object-fit:contain}
 .app-phone{width:190px;min-height:370px}
 .platform-steps{gap:11px;margin-top:16px}
-.platform-steps>div{padding:13px 14px;border-radius:11px}
-.platform-steps strong{font-size:11px}
-.platform-steps p{font-size:10px;line-height:1.58}
-@media(max-width:760px){.app-phone{width:144px;min-height:270px}.slide-visual{min-height:286px}.platform-steps{gap:9px;margin-top:12px}.platform-steps>div{padding:10px 11px}.platform-steps strong{font-size:10px}.platform-steps p{font-size:9px;line-height:1.5}}
+.platform-steps>div{padding:17px 18px;border-radius:12px}
+.platform-steps strong{font-size:13px}
+.platform-steps p{font-size:12px;line-height:1.6}
+@media(max-width:760px){.app-phone{width:144px;min-height:270px}.slide-visual{min-height:286px}.platform-steps{gap:11px;margin-top:14px}.platform-steps>div{padding:14px 15px}.platform-steps strong{font-size:12px}.platform-steps p{font-size:11px;line-height:1.55}}
 @media(max-width:380px){.app-phone{width:136px;min-height:260px}.slide-visual{min-height:265px}.provider-slide .slide-visual{min-height:268px}}
+.side-illustration .recovery-illustration{display:block;width:100%;height:100%;object-fit:contain}
+@media(max-width:760px){.side-illustration{inset:-40px 0 42px}}

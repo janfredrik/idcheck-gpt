@@ -139,6 +139,7 @@ export function Demo() {
   const seconds = String(secondsLeft % 60).padStart(2, "0");
   const isTap = phase === "tap";
   const isLanding = phase === "home";
+  const accountDomain = account.includes("@") ? account.slice(account.lastIndexOf("@") + 1) : "";
 
   return <main className={`shell${isTap ? " shell-guide" : ""}`}>
     <div className="aurora aurora-one" aria-hidden="true" />
@@ -148,7 +149,7 @@ export function Demo() {
         <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
         <span>idcheck<span className="brand-dot">.</span></span>
       </a>
-      <div className="secure-label"><span className="lock-icon">⌑</span> Sikker kontogjenoppretting</div>
+      <div className="secure-label"><span className="lock-icon">⌑</span> En løsning fra x99</div>
     </header>
 
     <section className={`hero${isTap ? " hero-guide" : ""}${isLanding ? " hero-landing" : ""}`}>
@@ -163,7 +164,7 @@ export function Demo() {
             <div><span>DEMOTENANT</span><strong>{displayTenantName}</strong></div>
             <span className="tenant-fixed" aria-label="Fast organisasjon">✓</span>
           </div>
-          <p>Bekreft identiteten din med Vipps for å få en engangskode til kontoen.</p>
+          <p>Bekreft identiteten din med Vipps eller BankID (kommer) for å få tilgang til kontoen.</p>
           <button className="primary-button landing-button" type="button" onClick={() => setPhase("form")}>Start nå <span aria-hidden="true">→</span></button>
         </div>
       </div>}
@@ -187,14 +188,14 @@ export function Demo() {
           {phase === "setup" && <div className="simple-state"><div className="result-icon">i</div><h2>Demomiljøet klargjøres</h2><p>Organisasjonen er ikke konfigurert ennå. Ta kontakt med IT-avdelingen.</p></div>}
 
           {(phase === "form" || phase === "waiting") && <div className="form-layout">
-            <div className="form-main">
+            <form className="form-main" onSubmit={(event) => { event.preventDefault(); if (phase === "form") void beginFlow(); }}>
               <div className="card-head"><div><div className="card-kicker">BEKREFT KONTOEN DIN</div><h2>Skriv inn nummeret du bruker i Vipps</h2></div><span className="step-badge">01 / 03</span></div>
               <div className="tenant-mini"><Image src="/dark-knight.png" alt="" width={36} height={36} /><span>{displayTenantName}</span><i>Demotenant</i></div>
               <label className="field-label phone-label" htmlFor="mobile">VIPPS-NUMMER</label>
               <div className="phone-field"><span className="field-icon">⌕</span><span className="country-prefix">+47</span><span className="prefix-divider" /><input id="mobile" inputMode="tel" autoComplete="tel-national" placeholder="4xx xx xxx" value={mobile} onChange={(event) => setMobile(event.target.value.replace(/^\s*(?:\+47|0047)\s*/, ""))} disabled={phase === "waiting" || busy} /></div>
 
               {phase === "form" ? <>
-                <button className="primary-button" type="button" disabled={!tenant || !mobile.trim() || busy} onClick={beginFlow}>{busy ? "Starter forespørsel …" : "Fortsett med Vipps"} <span aria-hidden="true">→</span></button>
+                <button className="primary-button" type="submit" disabled={!tenant || !mobile.trim() || busy}>{busy ? "Starter forespørsel …" : "Fortsett med Vipps"} <span aria-hidden="true">→</span></button>
               </> : <div className="simulation-panel">
                 <div className="waiting-header"><span className="spinner" /><div><strong>Venter på bekreftelse i Vipps</strong><span>Demo: ingen Vipps-forespørsel er sendt.</span></div></div>
                 {!simulationReady ? <p className="simulation-hint">Klargjør demosvar …</p> : <>
@@ -204,9 +205,9 @@ export function Demo() {
                 </>}
                 <button className="text-button" type="button" disabled={busy} onClick={closeFlow}>Avbryt</button>
               </div>}
-            </div>
+            </form>
             <aside className="form-side" aria-label="Om gjenopprettingen">
-              <div className="side-illustration" aria-hidden="true"><span className="orbit orbit-a" /><span className="orbit orbit-b" /><div className="shield-art"><b>✓</b></div><span className="spark spark-a">✦</span><span className="spark spark-b">✦</span></div>
+              <div className="side-illustration" aria-hidden="true"><Image className="recovery-illustration" src="/recovery-security-illustration.png" alt="" width={1672} height={941} /></div>
               <div className="side-caption"><span className="side-number">01</span><div><strong>Trygg vei tilbake</strong><p>Du bekrefter identiteten med Vipps før en engangskode kan opprettes.</p></div></div>
             </aside>
           </div>}
@@ -255,7 +256,7 @@ export function Demo() {
 
                 {guideStep === 2 && <div className="instruction-slide">
                   <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="app-signin-screen"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Logg på</strong><span>Jobb- eller skolekonto</span><div className="app-input">{account}</div><div className="app-blue-button">Neste <b>→</b></div></div></AuthenticatorPhone></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skriv inn jobbbrukeren din</h3><p>Skriv inn jobb-e-postadressen du vanligvis bruker til Microsoft 365. Domenet etter @ er vist på forrige steg.</p><span className="guide-tip">Bruk kontoen som fikk engangskoden.</span></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skriv inn jobbbrukeren din</h3><p>Skriv inn jobb-e-postadressen du vanligvis bruker til Microsoft 365. Domenet ditt er <strong>{accountDomain}</strong>.</p><span className="guide-tip">Bruk kontoen som fikk engangskoden. Av sikkerhetshensyn vises ikke hele e-postadressen.</span></div>
                 </div>}
 
                 {guideStep === 3 && <div className="instruction-slide">
@@ -265,14 +266,13 @@ export function Demo() {
 
                 {guideStep === 4 && <div className="instruction-slide">
                   <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="account-added-screen"><div className="account-shield">✓</div><small>KONTO LAGT TIL</small><strong>Jobb- eller skolekonto</strong><div className="passkey-action"><span>◉</span><div><b>Opprett en passkey</b><small>Face ID, fingeravtrykk eller PIN</small></div><i>›</i></div><div className="app-blue-button">Opprett passkey <b>→</b></div></div></AuthenticatorPhone></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Opprett passkey i appen</h3><p>Når kontoen er lagt til, åpne kontoen i Authenticator og trykk <strong>Opprett en passkey</strong>. Følg instruksjonene for å lagre passkey med Face ID, fingeravtrykk eller skjermlås.</p><span className="guide-tip">Hvis «Opprett en passkey» ikke vises, må IT aktivere passkeys for kontoen i Entra.</span></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Opprett passkey i appen</h3><p>Når kontoen er lagt til, åpne kontoen i Authenticator og trykk <strong>Opprett en passkey</strong>. Følg instruksjonene for å lagre passkey med Face ID, fingeravtrykk eller skjermlås. Når du blir bedt om å registrere mobilen, trykk <strong>Registrer enhet</strong> før du går videre til siste steg.</p></div>
                 </div>}
 
                 {guideStep === 5 && <div className="instruction-slide provider-slide">
                   <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="provider-screen"><div className="provider-icon">✓</div><strong>Passkey klar</strong><span>Authenticator er valgt som passkey-leverandør</span><div className="provider-toggle"><span>Authenticator</span><b>På</b><i>✓</i></div><small>Passkey lagres trygt på denne enheten</small></div></AuthenticatorPhone></div>
                   <div className="instruction-copy provider-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Slå på støtte på enheten</h3>
                     <div className="platform-steps"><div><strong>iPhone</strong><p>Krever iOS 17+. I Authenticator åpne <strong>Innstillinger</strong> og aktiver appen som passkey-leverandør. I iPhone-innstillinger: slå på Autofyll for passord og passkeys, og velg Authenticator.</p></div><div><strong>Android</strong><p>Krever Android 14+. Aktiver Authenticator som passkey-leverandør. Hvis du blir sendt til enhetsinnstillingene, velg Authenticator under <strong>Passord og kontoer → Flere leverandører</strong>.</p></div></div>
-                    <span className="guide-tip warning-tip">Passkey-registrering må være aktivert av IT. Fullfør registreringen med en gang etter TAP-innlogging.</span>
                     <a className="help-link" href="https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-register-passkey-authenticator" target="_blank" rel="noopener noreferrer">Microsofts mobilveiledning ↗</a>
                   </div>
                 </div>}
