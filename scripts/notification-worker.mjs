@@ -40,7 +40,7 @@ function messageFor(event) {
 }
 
 function smsText(reference) {
-  return `En engangskode (TAP) ble opprettet for kontoen din i idcheck. Kontakt IT umiddelbart hvis dette ikke var deg. Referanse: ${reference} (testmiljø)`;
+  return `En engangskode (TAP) ble opprettet for kontoen din i idcheck. Kontakt IT umiddelbart hvis dette ikke var deg. Referanse: ${reference.slice(-6)} (testmiljø)`;
 }
 
 function mobileName(mobile) {

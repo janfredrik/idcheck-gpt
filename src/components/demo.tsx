@@ -13,7 +13,7 @@ const genericError = "Vi kunne ikke bekrefte identiteten din automatisk, kontakt
 const guidePages = [
   { title: "Installer Microsoft Authenticator", eyebrow: "FØR DU BEGYNNER" },
   { title: "Legg til jobb- eller skolekonto", eyebrow: "1 · LEGG TIL KONTO" },
-  { title: "Logg inn med jobbbrukeren din", eyebrow: "2 · BRUKERNAVN" },
+  { title: "Logg inn med brukernavnet ditt", eyebrow: "2 · BRUKERNAVN" },
   { title: "Bruk engangskoden", eyebrow: "3 · TEMPORARY ACCESS PASS" },
   { title: "Opprett passkey i Authenticator", eyebrow: "4 · OPPRETT PASSKEY" },
   { title: "Aktiver passkey på mobilen", eyebrow: "5 · FULLFØR OPPSETTET" },
@@ -156,7 +156,7 @@ export function Demo() {
       {isLanding && <div className="landing-panel">
         <div className="landing-copy">
           <span className="landing-eyebrow"><i /> SELVBETJENT KONTOGJENOPPRETTING</span>
-          <h1>idcheck <span className="landing-highlight">identifiserer deg<span className="landing-magnifier" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="25" cy="25" r="17" fill="rgba(117,215,208,.2)" stroke="#83e1d8" strokeWidth="5"/><path d="m38 38 17 17" stroke="#83e1d8" strokeWidth="7" strokeLinecap="round"/><circle cx="19" cy="18" r="5" fill="#fff" fillOpacity=".72"/></svg></span></span> for å gi deg tilgang til kontoen din</h1>
+          <h1>idcheck <span className="landing-highlight">identifiserer deg</span> for å gi deg tilgang til kontoen din</h1>
         </div>
         <div className="landing-action">
           <div className="tenant-identity">
@@ -256,7 +256,7 @@ export function Demo() {
 
                 {guideStep === 2 && <div className="instruction-slide">
                   <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="app-signin-screen"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Logg på</strong><span>Jobb- eller skolekonto</span><div className="app-input">{account}</div><div className="app-blue-button">Neste <b>→</b></div></div></AuthenticatorPhone></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skriv inn jobbbrukeren din</h3><p>Skriv inn jobb-e-postadressen du vanligvis bruker til Microsoft 365. Domenet ditt er <strong>{accountDomain}</strong>.</p><span className="guide-tip">Bruk kontoen som fikk engangskoden. Av sikkerhetshensyn vises ikke hele e-postadressen.</span></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skriv inn brukernavnet ditt</h3><p>Skriv inn brukernavnet du vanligvis bruker til Microsoft 365. Domenet ditt er <strong>{accountDomain}</strong>.</p><span className="guide-tip">Av sikkerhetshensyn vises ikke hele e-postadressen.</span></div>
                 </div>}
 
                 {guideStep === 3 && <div className="instruction-slide">
