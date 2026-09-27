@@ -155,7 +155,7 @@ export function Demo() {
       {isLanding && <div className="landing-panel">
         <div className="landing-copy">
           <span className="landing-eyebrow"><i /> SELVBETJENT KONTOGJENOPPRETTING</span>
-          <h1>idcheck identifiserer deg for å gi deg tilgang til kontoen din</h1>
+          <h1>idcheck <span className="landing-highlight">identifiserer deg</span> for å gi deg tilgang til kontoen din</h1>
         </div>
         <div className="landing-action">
           <div className="tenant-identity">
@@ -240,7 +240,7 @@ export function Demo() {
               <div className="guide-progress" aria-hidden="true"><span style={{ width: `${((guideStep + 1) / guidePages.length) * 100}%` }} /></div>
               <div className="guide-slide" key={guideStep} aria-live="polite" aria-atomic="true">
                 {guideStep === 0 && <div className="install-slide">
-                  <div className="app-icon-large" aria-hidden="true"><span>✦</span></div>
+                  <div className="app-icon-large" aria-hidden="true"><Image src="/microsoft-authenticator-icon.png" alt="" width={1266} height={1243} /></div>
                   <div className="install-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Last ned Microsoft Authenticator</h3><p>Skann QR-koden for telefonen din, eller åpne appbutikken direkte.</p></div>
                   <div className="store-options">
                     <div className="store-option"><StoreQr href="https://apps.apple.com/app/microsoft-authenticator/id983156458" label="App Store" /><div><strong>iPhone · iOS</strong><span>Last ned fra App Store</span><a href="https://apps.apple.com/app/microsoft-authenticator/id983156458" target="_blank" rel="noopener noreferrer">Åpne App Store ↗</a></div></div>
@@ -254,8 +254,8 @@ export function Demo() {
                 </div>}
 
                 {guideStep === 2 && <div className="instruction-slide">
-                  <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="app-signin-screen"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Logg på</strong><span>Jobb- eller skolekonto</span><div className="app-input">navn@firma.no</div><div className="app-blue-button">Neste <b>→</b></div></div></AuthenticatorPhone></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skriv inn jobbbrukeren din</h3><p>Skriv inn hele jobb-e-postadressen (UPN) du bruker til Microsoft 365, for eksempel <strong>navn@firma.no</strong>.</p><span className="guide-tip">Bruk kontoen som fikk engangskoden.</span></div>
+                  <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="app-signin-screen"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Logg på</strong><span>Jobb- eller skolekonto</span><div className="app-input">{account}</div><div className="app-blue-button">Neste <b>→</b></div></div></AuthenticatorPhone></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Skriv inn jobbbrukeren din</h3><p>Skriv inn jobb-e-postadressen du vanligvis bruker til Microsoft 365. Domenet etter @ er vist på forrige steg.</p><span className="guide-tip">Bruk kontoen som fikk engangskoden.</span></div>
                 </div>}
 
                 {guideStep === 3 && <div className="instruction-slide">
