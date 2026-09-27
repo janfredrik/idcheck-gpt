@@ -156,7 +156,7 @@ export function Demo() {
       {isLanding && <div className="landing-panel">
         <div className="landing-copy">
           <span className="landing-eyebrow"><i /> SELVBETJENT KONTOGJENOPPRETTING</span>
-          <h1>idcheck <span className="landing-highlight">identifiserer deg</span> for å gi deg tilgang til kontoen din</h1>
+          <h1>idcheck <span className="landing-highlight">identifiserer deg<span className="landing-magnifier" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="25" cy="25" r="17" fill="rgba(117,215,208,.2)" stroke="#83e1d8" strokeWidth="5"/><path d="m38 38 17 17" stroke="#83e1d8" strokeWidth="7" strokeLinecap="round"/><circle cx="19" cy="18" r="5" fill="#fff" fillOpacity=".72"/></svg></span></span> for å gi deg tilgang til kontoen din</h1>
         </div>
         <div className="landing-action">
           <div className="tenant-identity">
@@ -207,7 +207,7 @@ export function Demo() {
               </div>}
             </form>
             <aside className="form-side" aria-label="Om gjenopprettingen">
-              <div className="side-illustration" aria-hidden="true"><Image className="recovery-illustration" src="/recovery-security-illustration.png" alt="" width={1672} height={941} /></div>
+              <div className="side-illustration" aria-hidden="true"><Image className="recovery-illustration" src="/recovery-verification-illustration.png" alt="" width={1254} height={1254} /></div>
               <div className="side-caption"><span className="side-number">01</span><div><strong>Trygg vei tilbake</strong><p>Du bekrefter identiteten med Vipps før en engangskode kan opprettes.</p></div></div>
             </aside>
           </div>}

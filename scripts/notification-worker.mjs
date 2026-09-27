@@ -39,8 +39,8 @@ function messageFor(event) {
   return { subject: `[idcheck demo] ${label}`, text: `${label}. Tidspunkt: ${new Date(event.created_at).toISOString()}. Referanse: ${event.attempt_id}.\n\nIngen mobilnummer, identitetstoken eller engangskode er inkludert i varselet.` };
 }
 
-function smsText() {
-  return "En engangskode (TAP) ble opprettet for kontoen din i idcheck. TAP-koden sendes ikke på SMS. Kontakt IT umiddelbart hvis dette ikke var deg.";
+function smsText(reference) {
+  return `En engangskode (TAP) ble opprettet for kontoen din i idcheck. Kontakt IT umiddelbart hvis dette ikke var deg. Referanse: ${reference} (testmiljø)`;
 }
 
 function mobileName(mobile) {
@@ -65,7 +65,7 @@ async function sendTapSms(event) {
     },
     body: JSON.stringify({
       accountId: 13144,
-      text: smsText(),
+      text: smsText(event.attempt_id),
       sender: "Vivicta",
       numberPoolId: null,
       scheduled: null,
