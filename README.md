@@ -8,7 +8,7 @@ Selvbetjent kontogjenoppretting for Microsoft Entra ID. Første versjon er avgre
 
 - Norsk, mobiltilpasset gjenopprettingsflyt med organisasjonssøk, stor arbeidsflate og bla-gjennom-guide for å sette opp en passkey direkte i Microsoft Authenticator med TAP. Guiden har QR-koder til App Store og Google Play.
 - Simulert Vipps-godkjenning/avvisning; BankID er deaktivert.
-- Ekte Graph-oppslag, fast tenant, testkonto-allowlist, gruppekrav, TAP-policy og fail-closed kontroll av aktive katalogroller. PIM-berettigelser kontrolleres ikke i denne demoen.
+- Ekte Graph-oppslag, fast tenant, gruppekrav, TAP-policy og fail-closed kontroll av aktive katalogroller. PIM-berettigelser kontrolleres ikke i denne demoen.
 - Ekte 60-minutters engangs-TAP, vist kun i opprinnelig svar. TAP-verdien vises ikke igjen og sendes aldri på e-post.
 - PostgreSQL for sesjoner, engangsutstedelse, rate limiting, revisjon og varslingskø.
 - SMTP-varsler til IT ved forsøk og en egen sikkerhetsmelding til brukerens `mail`-adresse når TAP opprettes. Valgfritt SMS-varsel via Pling kan sendes til samme mobilnummer. Ingen varsler inneholder TAP-verdien.
@@ -49,7 +49,7 @@ Etter godkjenning returnerer Microsoft administratorens nettleser til callbacken
 
 Opprett en ikke-privilegert medlemskonto i demotenanten. Sett `mobilePhone` i E.164-format, for eksempel `+4741234567`. Bruk ikke gjestekonto, administrator, nødtilgangskonto eller tjenestekonto.
 
-Opprett en sikkerhetsgruppe, for eksempel `idcheck-enabled`. Legg bare testkontoer i gruppen, og noter gruppens object ID og testkontoenes object IDs.
+Opprett en sikkerhetsgruppe, for eksempel `idcheck-enabled`. Legg bare testkontoer i gruppen, og noter gruppens object ID. Medlemskap i gruppen (også via nestede grupper) er det som gir tilgang.
 
 Gå til **Entra ID → Authentication methods → Policies → Temporary Access Pass**:
 
@@ -66,7 +66,7 @@ idcheck endrer ikke Entra-policyer eller grupper automatisk. Ukjent eller utilst
 Kopier `.env.example` til `.env` på serveren. Ikke legg `.env` i Git eller i image. Sett:
 
 - `IDCHECK_MODE=demo`, `DEMO_ENABLED=true`, `DEMO_TAP_ENABLED=true`.
-- `DEMO_TENANT_ID`, `DEMO_TENANT_NAME`, `DEMO_ALLOWED_USER_IDS` (komma-separerte object IDs) og `DEMO_ALLOWED_GROUP_ID`.
+- `DEMO_TENANT_ID`, `DEMO_TENANT_NAME` og `DEMO_ALLOWED_GROUP_ID` (object ID for testgruppen).
 - `ENTRA_CLIENT_ID` og `ENTRA_CLIENT_SECRET` for demoappregistreringen.
 - `ALERT_EMAIL` for demotenantens kontaktperson.
 - `PUBLIC_BASE_URL` for den eksakte eksterne HTTPS-origin-en.
@@ -107,10 +107,10 @@ Etter første publisering, velg synlighet for pakken under GitHub Packages. Unra
 
 ## Sikkerhetsgrenser for demo
 
-- Simulert Vipps er ikke identitetsbevis. Testmiljøets tilgangskontroll og konto-allowlist avgrenser testen.
+- Simulert Vipps er ikke identitetsbevis. Testmiljøets tilgangskontroll og gruppekravet avgrenser testen.
 - Serveren er fastlåst til én tenant og ignorerer ikke en mismatch mellom tenant-ID i request og konfigurasjon.
 - Krev eksakt, entydig `mobilePhone`-match. Duplikater og manglende treff avvises likt.
-- Kontoen må være aktiv, intern, allowlistet, medlem av `idcheck-enabled`, omfattet av TAP-policyen og uten aktive Entra-roller. PIM-berettigelser kontrolleres ikke i denne demoversjonen fordi demotenanten mangler P2/Governance-lisens; ikke bruk oppsettet i en tenant der PIM-berettigelser er i bruk.
+- Kontoen må være aktiv, intern, medlem av `idcheck-enabled`, omfattet av TAP-policyen og uten aktive Entra-roller. PIM-berettigelser kontrolleres ikke i denne demoversjonen fordi demotenanten mangler P2/Governance-lisens; ikke bruk oppsettet i en tenant der PIM-berettigelser er i bruk.
 - Graph-feil gir avvisning. Mobilnummer lagres ikke i revisjon eller rate limiting, som bruker HMAC-referanser. Når SMS er aktivert, beholdes nummeret midlertidig i varslingskøen fram til ett sende-forsøk og redigeres deretter bort.
 - TAP opprettes etter eksplisitt klikk. DB-lås serialiserer utstedelse per konto; et uavklart Graph-resultat forsøkes ikke automatisk på nytt.
 - TAP vises én gang, med `no-store`, og går aldri i PostgreSQL, e-post eller SMS. Når det finnes en gyldig e-postadresse i `mail`-attributtet, legges et varsel til brukeren i SMTP-køen. Hvis SMS er aktivert, legges et tilsvarende varsel til mobilnummeret i køen. Meldingen sier at TAP-en ble opprettet, men inneholder ikke koden. SMS får ett sende-forsøk fordi Pling-kallet ikke har en idempotensnøkkel; dette begrenser risikoen for fakturerte duplikater. Mottakerdata redigeres bort fra kø-raden etter forsøket.

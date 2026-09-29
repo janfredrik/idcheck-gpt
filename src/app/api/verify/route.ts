@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
     const match = await findUniqueMobileMatch(mobile);
     const user = match.user;
     if (!user) { await finishAttempt(attemptId, "rejected", match.reason); return fail(genericFailure, attemptId); }
-    if (!config.allowedUserIds.has(user.id.toLowerCase())) { await finishAttempt(attemptId, "rejected", "ACCOUNT_NOT_ALLOWLISTED"); return fail(genericFailure, attemptId); }
     if (!(await isEligibleForDemo(user))) { await finishAttempt(attemptId, "rejected", "ACCOUNT_NOT_ELIGIBLE"); return fail(genericFailure, attemptId); }
     const sessionToken = randomToken(); const csrf = randomToken();
     await pool().query("INSERT INTO flow_sessions (token_hash,csrf_hash,tenant_id,user_id,attempt_id,status,expires_at) VALUES ($1,$2,$3,$4,$5,'verified',now()+($6 * interval '1 minute'))", [sha256(sessionToken), sha256(csrf), config.tenantId, user.id, attemptId, SESSION_MINUTES]);

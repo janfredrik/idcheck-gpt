@@ -58,7 +58,7 @@ export async function findUniqueMobileMatch(mobile: string): Promise<{ user: Gra
 }
 
 export async function getUserById(userId: string): Promise<GraphUser | null> {
-  const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) return null;
+  if (!getDemoConfig()) return null;
   const accessToken = await token();
   return getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id,userPrincipalName,mobilePhone,mail,accountEnabled,userType" }), accessToken, "USER_BY_ID");
 }
@@ -74,14 +74,13 @@ export async function checkRequiredDemoPermissions(): Promise<void> {
   const graphAudiences = new Set(["https://graph.microsoft.com", "00000003-0000-0000-c000-000000000000"]);
   const requiredRoles = ["User.Read.All", "UserAuthMethod-TAP.ReadWrite.All", "Policy.Read.AuthenticationMethod", "RoleManagement.Read.Directory"];
   if (claims.tid?.toLowerCase() !== config.tenantId.toLowerCase() || !claims.aud || !graphAudiences.has(claims.aud) || !claims.exp || claims.exp * 1000 <= Date.now() || !requiredRoles.every((role) => claims.roles?.includes(role))) throw new Error("GRAPH_PERMISSION_MISSING");
-  const userId = [...config.allowedUserIds][0];
-  const user = await getJson<GraphUser>(graphUrl(`users/${encodeURIComponent(userId)}`, { "$select": "id" }), result.accessToken, "CONSENT_USER_CHECK");
-  if (user.id.toLowerCase() !== userId.toLowerCase()) throw new Error("GRAPH_USER_CHECK_FAILED");
+  const users = await getJson<GraphPage<GraphUser>>(graphUrl("users", { "$select": "id", "$top": "1" }), result.accessToken, "CONSENT_USER_CHECK");
+  if (!Array.isArray(users.value)) throw new Error("GRAPH_USER_CHECK_FAILED");
 }
 
 export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
   const config = getDemoConfig();
-  if (!config || !config.allowedUserIds.has(user.id.toLowerCase())) return false;
+  if (!config) return false;
   if (user.accountEnabled !== true || user.userType !== "Member" || !user.userPrincipalName) return false;
   const accessToken = await token();
   const groups = await collect<{ id?: string }>(graphUrl(`users/${encodeURIComponent(user.id)}/transitiveMemberOf/microsoft.graph.group`, { "$select": "id", "$top": "999", "$count": "true" }), accessToken, 50, "GROUP_MEMBERSHIP", true);
@@ -108,7 +107,7 @@ export async function isEligibleForDemo(user: GraphUser): Promise<boolean> {
 }
 
 export async function createOneTimeTap(userId: string): Promise<{ tap: string; expiresAt: string }> {
-  const config = getDemoConfig(); if (!config || !config.allowedUserIds.has(userId.toLowerCase())) throw new Error("TARGET_NOT_ALLOWED");
+  if (!getDemoConfig()) throw new Error("CONFIG_INVALID");
   const accessToken = await token();
   const existing = await getJson<{ value?: Array<{ startDateTime?: string; lifetimeInMinutes?: number }> }>(graphUrl(`users/${encodeURIComponent(userId)}/authentication/temporaryAccessPassMethods`), accessToken, "TAP_LIST");
   const now = Date.now();
