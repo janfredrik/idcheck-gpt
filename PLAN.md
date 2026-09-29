@@ -205,6 +205,20 @@ Ferdig når: hele flyten er bekreftet i nettleser, ingen hemmeligheter finnes i 
 
 Automatiserte tester bruker Graph-dobler. Reelle Graph-skriveoperasjoner kjøres bare i den dedikerte demotenanten og mot tillatte testkontoer; de kjøres ikke på vanlige pull requests.
 
+## Forbedringspotensial
+
+Funn fra kodegjennomgang 28.09.2026. Ikke påbegynt. Foreslått rekkefølge: 1, 3 og 6 først, deretter 2 og 4.
+
+1. **Formatering og lint.** Prosjektet mangler Prettier/ESLint og `lint`-script, selv om GitHub Actions-kravet over forutsetter lint. Mange linjer er over 200 tegn med flere setninger per linje, noe som gjør review og diff tunge.
+2. **Tester.** Det finnes ingen automatiserte tester. Rene og sikkerhetskritiske funksjoner som `normalizeNorwegianMobile`, `requireSameOrigin`, `readJsonLimited` og TAP-policyvurderingen i `isEligibleForDemo` er gode første kandidater.
+3. **Felles `fail`-hjelper.** `start`, `verify` og `tap` definerer hver sin `fail` med ulik argumentrekkefølge (`fail(message, reference)` mot `fail(reference, message)`). Samle i én `fail({ reference, message })` i `security.ts`.
+4. **Konstanter i stedet for magiske tall.** Utløp på 5 minutter for forsøk står i `audit.ts`, `start/route.ts` (`300`) og i SQL i varslingsarbeideren. Forsøksgrensen 5 per 15 minutter står bare i `audit.ts`. Flytt til `config.ts` på linje med `SESSION_MINUTES`.
+5. **Duplisering.** `session/route.ts` gjør `BEGIN`/`COMMIT` og cookie-sletting manuelt i stedet for `transaction()` og `clearSessionCookie()`. `proxy.ts` har egen `equalSecret` som tilsvarer `safeEqual`. `finishAttempt` bruker `process.env.ALERT_EMAIL` i stedet for `config.alertEmail`. Den generiske feilmeldingen er duplisert mellom server og klient, med ulik tegnsetting.
+6. **Atomisk `finishAttempt`.** Funksjonen gjør opptil fire skrivinger uten transaksjon. Feiler en innsetting, kan forsøket være oppdatert uten at varselet er lagt i kø. Pakk inn i `transaction()`.
+7. **Graph-kostnad.** `isEligibleForDemo` henter alle rolletildelinger i tenanten, opptil 50 sider, to ganger per vellykket flyt. Filtrer på `principalId` per bruker og gruppe. `getDemoConfig()` parser og validerer miljøvariablene på nytt ved hvert kall og kan caches.
+8. **`demo.tsx`.** Komponenten har 294 linjer og 14 `useState`, og hver fetch-funksjon gjentar samme mønster for `setReference`/`setNotice`/`setPhase`. Vurder `useReducer` for fasene, en felles `postJson`-hjelper og egen komponent for guide-sidene.
+9. **Risikoer.** `requestIp` stoler på `X-Real-IP`/`X-Forwarded-For`; uten en proxy som overskriver disse kan IP-grensen omgås med forfalskede headere. Pling-integrasjonen etterligner en innlogget nettleser med cookie og User-Agent og kan slutte å virke uten varsel.
+
 ## Opplysninger som trengs ved integrasjon, ikke for planlegging
 
 - Demotenantens tenant-ID og testkontoenes object IDs.
