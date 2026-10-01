@@ -2,7 +2,7 @@
 
 import QRCode from "qrcode";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Tenant = { id: string; name: string };
 type Phase = "loading" | "setup" | "home" | "form" | "waiting" | "eligible" | "tap" | "done" | "failed";
@@ -35,6 +35,21 @@ function StoreQr({ href, label }: { href: string; label: string }) {
   </a>;
 }
 
+type IconName = "lock" | "phone" | "copy" | "mail" | "check" | "alert" | "info";
+const iconPaths: Record<IconName, React.ReactNode> = {
+  lock: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+  phone: <><rect x="7" y="3" width="10" height="18" rx="2.5" /><path d="M11 18h2" /></>,
+  copy: <><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h8" /></>,
+  mail: <><rect x="3.5" y="6" width="17" height="12" rx="2" /><path d="m4.5 7.5 7.5 5.5 7.5-5.5" /></>,
+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+  alert: <><path d="M12 7v6" /><path d="M12 17h.01" /></>,
+  info: <><path d="M12 11v6" /><path d="M12 7h.01" /></>,
+};
+
+function Icon({ name }: { name: IconName }) {
+  return <svg className="icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{iconPaths[name]}</svg>;
+}
+
 function AuthenticatorPhone({ children }: { children: React.ReactNode }) {
   return <div className="app-phone" aria-hidden="true"><div className="app-notch" /><div className="app-toolbar"><span>Authenticator</span><b>＋</b></div><div className="app-screen">{children}</div><div className="app-home-indicator" /></div>;
 }
@@ -55,6 +70,8 @@ export function Demo() {
   const [guideStep, setGuideStep] = useState(0);
   const [emailNoticeQueued, setEmailNoticeQueued] = useState(false);
   const [reference, setReference] = useState("");
+  const stageHeading = useRef<HTMLHeadingElement>(null);
+  const previousPhase = useRef<Phase>("loading");
 
   useEffect(() => {
     let active = true;
@@ -84,6 +101,13 @@ export function Demo() {
   }, [phase, expiresAt]);
 
   useEffect(() => { if (phase === "tap") setGuideStep(0); }, [phase]);
+
+  useEffect(() => {
+    const from = previousPhase.current; previousPhase.current = phase;
+    if (from === "loading" || from === phase || phase === "home") return;
+    window.scrollTo({ top: 0 });
+    stageHeading.current?.focus({ preventScroll: true });
+  }, [phase]);
 
   async function beginFlow() {
     if (!tenant || busy) return;
@@ -149,20 +173,20 @@ export function Demo() {
         <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
         <span>idcheck<span className="brand-dot">.</span></span>
       </a>
-      <div className="secure-label"><span className="lock-icon">⌑</span> En løsning fra x99</div>
+      <div className="secure-label"><span className="lock-icon"><Icon name="lock" /></span> <span className="secure-text">En løsning fra x99</span></div>
     </header>
 
     <section className={`hero${isTap ? " hero-guide" : ""}${isLanding ? " hero-landing" : ""}`}>
       {isLanding && <div className="landing-panel">
         <div className="landing-copy">
-          <span className="landing-eyebrow"><i /> SELVBETJENT KONTOGJENOPPRETTING</span>
-          <h1>idcheck <span className="landing-highlight">identifiserer deg</span> for å gi deg tilgang til kontoen din</h1>
+          <h1 className="scan-title">idcheck <span className="landing-highlight">identifiserer deg</span> for å gi deg tilgang til kontoen din</h1>
+          <span className="scan-beam" aria-hidden="true" />
         </div>
         <div className="landing-action">
           <div className="tenant-identity">
             <Image src="/dark-knight.png" alt="Dark Knight-logo" width={84} height={84} priority />
             <div><span>DEMOTENANT</span><strong>{displayTenantName}</strong></div>
-            <span className="tenant-fixed" aria-label="Fast organisasjon">✓</span>
+            <span className="tenant-fixed" role="img" aria-label="Fast organisasjon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6.5 12.5 3.6 3.6L17.5 8.5" /></svg></span>
           </div>
           <p>Bekreft identiteten din med Vipps eller BankID (kommer) for å få tilgang til kontoen.</p>
           <button className="primary-button landing-button" type="button" onClick={() => setPhase("form")}>Start nå <span aria-hidden="true">→</span></button>
@@ -172,12 +196,12 @@ export function Demo() {
       <div className="stage-heading">
         <div>
           <span className="stage-eyebrow">{phase === "tap" ? "KONTOGJENOPPRETTING · STEG 3" : phase === "eligible" ? "KONTOGJENOPPRETTING · STEG 2" : phase === "done" ? "KONTOGJENOPPRETTING · FERDIG" : "KONTOGJENOPPRETTING · STEG 1"}</span>
-          <h1>{phase === "tap" ? "Sett opp Authenticator" : phase === "eligible" ? "Identiteten er bekreftet" : phase === "done" ? "Forespørselen er avsluttet" : phase === "form" || phase === "waiting" ? "Skriv inn Vipps-nummeret ditt" : "Få tilgang til kontoen"}</h1>
+          <h1 ref={stageHeading} tabIndex={-1}>{phase === "tap" ? "Sett opp Authenticator" : phase === "eligible" ? "Identiteten er bekreftet" : phase === "done" ? "Forespørselen er avsluttet" : phase === "form" || phase === "waiting" ? "Skriv inn Vipps-nummeret ditt" : "Få tilgang til kontoen"}</h1>
         </div>
         <div className="steps-rail" aria-label="Steg i gjenopprettingen">
-          <span className={phase === "form" || phase === "waiting" ? "rail-active" : phase === "eligible" || isTap || phase === "done" ? "rail-done" : ""}><i>1</i> Identitet</span><b />
-          <span className={phase === "eligible" ? "rail-active" : ["tap", "done"].includes(phase) ? "rail-done" : ""}><i>2</i> Bekreftelse</span><b />
-          <span className={isTap ? "rail-active" : phase === "done" ? "rail-done" : ""}><i>3</i> Ny sikkerhetsmetode</span>
+          <span aria-current={phase === "form" || phase === "waiting" ? "step" : undefined} className={phase === "form" || phase === "waiting" ? "rail-active" : phase === "eligible" || isTap || phase === "done" ? "rail-done" : ""}><i>1</i> Identitet</span><b />
+          <span aria-current={phase === "eligible" ? "step" : undefined} className={phase === "eligible" ? "rail-active" : ["tap", "done"].includes(phase) ? "rail-done" : ""}><i>2</i> Bekreftelse</span><b />
+          <span aria-current={isTap ? "step" : undefined} className={isTap ? "rail-active" : phase === "done" ? "rail-done" : ""}><i>3</i> Ny sikkerhetsmetode</span>
         </div>
       </div>
 
@@ -185,14 +209,14 @@ export function Demo() {
         <section className={`recovery-card${isTap ? " is-tap" : ""}`}>
           {phase === "loading" && <div className="loading-state"><span className="spinner" /> Klargjør sikker tilkobling …</div>}
 
-          {phase === "setup" && <div className="simple-state"><div className="result-icon">i</div><h2>Demomiljøet klargjøres</h2><p>Organisasjonen er ikke konfigurert ennå. Ta kontakt med IT-avdelingen.</p></div>}
+          {phase === "setup" && <div className="simple-state"><div className="result-icon"><Icon name="info" /></div><h2>Demomiljøet klargjøres</h2><p>Organisasjonen er ikke konfigurert ennå. Ta kontakt med IT-avdelingen.</p></div>}
 
           {(phase === "form" || phase === "waiting") && <div className="form-layout">
             <form className="form-main" onSubmit={(event) => { event.preventDefault(); if (phase === "form") void beginFlow(); }}>
               <div className="card-head"><div><div className="card-kicker">BEKREFT KONTOEN DIN</div><h2>Skriv inn nummeret du bruker i Vipps</h2></div><span className="step-badge">01 / 03</span></div>
               <div className="tenant-mini"><Image src="/dark-knight.png" alt="" width={36} height={36} /><span>{displayTenantName}</span><i>Demotenant</i></div>
               <label className="field-label phone-label" htmlFor="mobile">VIPPS-NUMMER</label>
-              <div className="phone-field"><span className="field-icon">⌕</span><span className="country-prefix">+47</span><span className="prefix-divider" /><input id="mobile" inputMode="tel" autoComplete="tel-national" placeholder="4xx xx xxx" value={mobile} onChange={(event) => setMobile(event.target.value.replace(/^\s*(?:\+47|0047)\s*/, ""))} disabled={phase === "waiting" || busy} /></div>
+              <div className="phone-field"><span className="field-icon"><Icon name="phone" /></span><span className="country-prefix">+47</span><span className="prefix-divider" /><input id="mobile" inputMode="tel" autoComplete="tel-national" placeholder="4xx xx xxx" value={mobile} onChange={(event) => setMobile(event.target.value.replace(/^\s*(?:\+47|0047)\s*/, ""))} disabled={phase === "waiting" || busy} /></div>
 
               {phase === "form" ? <>
                 <button className="primary-button" type="submit" disabled={!tenant || !mobile.trim() || busy}>{busy ? "Starter forespørsel …" : "Fortsett med Vipps"} <span aria-hidden="true">→</span></button>
@@ -200,7 +224,7 @@ export function Demo() {
                 <div className="waiting-header"><span className="spinner" /><div><strong>Venter på bekreftelse i Vipps</strong><span>Demo: ingen Vipps-forespørsel er sendt.</span></div></div>
                 {!simulationReady ? <p className="simulation-hint">Klargjør demosvar …</p> : <>
                   <div className="simulation-divider"><span>SIMULER VIPPS-RESULTAT</span></div>
-                  <button className="approve-button" type="button" disabled={busy} onClick={() => startSimulation("approved")}>✓ &nbsp; Simuler godkjenning</button>
+                  <button className="approve-button" type="button" disabled={busy} onClick={() => startSimulation("approved")}><Icon name="check" /> Simuler godkjenning</button>
                   <button className="reject-button" type="button" disabled={busy} onClick={() => startSimulation("denied")}>Simuler avvisning</button>
                 </>}
                 <button className="text-button" type="button" disabled={busy} onClick={closeFlow}>Avbryt</button>
@@ -212,12 +236,13 @@ export function Demo() {
             </aside>
           </div>}
 
-          {phase === "failed" && <div className="simple-state result-block error-block"><div className="result-icon error-icon">!</div><h2>Forespørselen kunne ikke fullføres</h2><p>{notice || genericError}</p>{reference && <p className="error-reference">Referanse: <code>{reference}</code></p>}<button className="primary-button" type="button" onClick={closeFlow}>Prøv igjen <span aria-hidden="true">→</span></button></div>}
+          {phase === "failed" && <div className="simple-state result-block error-block"><div className="result-icon error-icon"><Icon name="alert" /></div><h2>Forespørselen kunne ikke fullføres</h2><p>{notice || genericError}</p>{reference && <p className="error-reference">Referanse: <code>{reference}</code></p>}<button className="primary-button" type="button" onClick={closeFlow}>Prøv igjen <span aria-hidden="true">→</span></button></div>}
 
           {phase === "eligible" && <div className="simple-state eligible-state">
-            <div className="result-icon success-icon">✓</div><h2>Identiteten er bekreftet</h2>
+            <div className="result-icon success-icon"><Icon name="check" /></div><h2>Identiteten er bekreftet</h2>
             <p>Du kan opprette en engangskode for denne kontoen.</p>
-            <div className="account-preview"><span className="avatar">{account.charAt(0).toUpperCase()}</span><div><small>BRUKERKONTO</small><strong>{account}</strong></div><span className="verified-mark">✓</span></div>
+            <div className="account-preview"><span className="avatar">{account.charAt(0).toUpperCase()}</span><div><small>BRUKERKONTO</small><strong>{account}</strong></div><span className="verified-mark"><Icon name="check" /></span></div>
+            <div className="real-tap-notice"><span><Icon name="alert" /></span><p><strong>Dette lager en ekte innloggingskode.</strong> Vipps-godkjenningen er simulert, men engangskoden kan brukes til å logge inn på kontoen i demotenanten.</p></div>
             <button className="primary-button" type="button" disabled={busy} onClick={issueTap}>{busy ? "Oppretter kode …" : "Lag engangskode"}<span aria-hidden="true">→</span></button>
             <button className="text-button" type="button" onClick={closeFlow}>Avbryt</button>
           </div>}
@@ -227,18 +252,18 @@ export function Demo() {
               <div className="card-head"><div><div className="card-kicker">TEMPORARY ACCESS PASS</div><h2>Engangskoden din</h2></div><span className="live-pill"><i /> Aktiv</span></div>
               <p className="tap-instruction">Bruk koden til å logge inn og registrere Microsoft Authenticator.</p>
               <div className="tap-code" aria-label="Engangskode">{tap}</div>
-              <button className="copy-button" type="button" onClick={() => navigator.clipboard.writeText(tap).then(() => setNotice("Koden er kopiert."), () => setNotice("Kunne ikke kopiere. Marker koden og kopier den."))}>▢ &nbsp; Kopier engangskode</button>
+              <button className="copy-button" type="button" onClick={() => navigator.clipboard.writeText(tap).then(() => setNotice("Koden er kopiert."), () => setNotice("Kunne ikke kopiere. Marker koden og kopier den."))}><Icon name="copy" /> Kopier engangskode</button>
               <div className="expiry-row"><span>Utløper om</span><strong>{minutes}:{seconds}</strong></div>
-              <div className="expiry-track"><span style={{ width: `${Math.max(0, secondsLeft / 3600 * 100)}%` }} /></div>
+              <div className="expiry-track"><span style={{ transform: `scaleX(${Math.min(1, Math.max(0, secondsLeft / 3600))})` }} /></div>
               {notice && <p className="copy-notice" role="status">{notice}</p>}
-              <div className="mail-notice"><span aria-hidden="true">✉</span><p>{emailNoticeQueued ? "Varsel er lagt i kø til e-postadressen i kontoen. Selve koden sendes aldri på e-post." : "Fant ingen gyldig e-postadresse i kontoen. Kontakt IT hvis du trenger varsel på e-post."}</p></div>
+              <div className="mail-notice"><span><Icon name="mail" /></span><p>{emailNoticeQueued ? "Varsel er lagt i kø til e-postadressen i kontoen. Selve koden sendes aldri på e-post." : "Fant ingen gyldig e-postadresse i kontoen. Kontakt IT hvis du trenger varsel på e-post."}</p></div>
               <p className="tap-warning">Engangskoden kan bare brukes én gang.</p>
               <button className="text-button" type="button" onClick={() => { setTap(""); setPhase("done"); }}>Ferdig — fjern koden fra skjermen</button>
             </aside>
 
             <section className="guide-panel" aria-label="Veiledning for Microsoft Authenticator">
               <div className="guide-heading"><div><span className="card-kicker">SLIK KOMMER DU I GANG</span><h2>{guidePages[guideStep].title}</h2></div><span className="guide-count">{String(guideStep + 1).padStart(2, "0")} <i>/</i> {String(guidePages.length).padStart(2, "0")}</span></div>
-              <div className="guide-progress" aria-hidden="true"><span style={{ width: `${((guideStep + 1) / guidePages.length) * 100}%` }} /></div>
+              <div className="guide-progress" aria-hidden="true"><span style={{ transform: `scaleX(${(guideStep + 1) / guidePages.length})` }} /></div>
               <div className="guide-slide" key={guideStep} aria-live="polite" aria-atomic="true">
                 {guideStep === 0 && <div className="install-slide">
                   <div className="app-icon-large" aria-hidden="true"><Image src="/microsoft-authenticator-icon.png" alt="" width={1266} height={1243} /></div>
@@ -261,7 +286,7 @@ export function Demo() {
 
                 {guideStep === 3 && <div className="instruction-slide">
                   <div className="slide-visual mobile-visual"><AuthenticatorPhone><div className="app-signin-screen app-tap-screen"><div className="ms-mark"><i /><i /><i /><i /></div><strong>Midlertidig tilgangskode</strong><span>Logg på med engangskoden</span><div className="app-input tap-dots"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="app-blue-button">Logg på <b>→</b></div></div></AuthenticatorPhone></div>
-                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Logg inn med TAP</h3><p>Velg <strong>Midlertidig tilgangskode</strong> som innloggingsmåte hvis du blir spurt. Skriv inn koden fra feltet til venstre.</p><span className="guide-tip warning-tip">TAP-en kan bare brukes én gang. Fortsett oppsettet med en gang.</span></div>
+                  <div className="instruction-copy"><span className="slide-eyebrow">{guidePages[guideStep].eyebrow}</span><h3>Logg inn med TAP</h3><p>Velg <strong>Midlertidig tilgangskode</strong> som innloggingsmåte hvis du blir spurt. Skriv inn engangskoden som vises på denne siden.</p><span className="guide-tip warning-tip">TAP-en kan bare brukes én gang. Fortsett oppsettet med en gang.</span></div>
                 </div>}
 
                 {guideStep === 4 && <div className="instruction-slide">
@@ -285,7 +310,7 @@ export function Demo() {
             </section>
           </div>}
 
-          {phase === "done" && <div className="simple-state done-block"><div className="result-icon success-icon">✓</div><h2>Forespørselen er avsluttet</h2><p>{notice || "Engangskoden vises ikke igjen."}</p><button className="primary-button" type="button" onClick={closeFlow}>Tilbake til start <span aria-hidden="true">→</span></button></div>}
+          {phase === "done" && <div className="simple-state done-block"><div className="result-icon success-icon"><Icon name="check" /></div><h2>Forespørselen er avsluttet</h2><p>{notice || "Engangskoden vises ikke igjen."}</p><button className="primary-button" type="button" onClick={closeFlow}>Tilbake til start <span aria-hidden="true">→</span></button></div>}
         </section>
       </div>
       </>}
