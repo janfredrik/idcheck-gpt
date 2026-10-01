@@ -1,0 +1,700 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-01T20:23:42.617252+00:00",
+  "title": "Design System: idcheck",
+  "extensions": {
+    "colorMeta": {
+      "night": {
+        "role": "neutral",
+        "displayName": "Night",
+        "tonalRamp": [
+          "oklch(15% 0.03 245)",
+          "oklch(25% 0.03 245)",
+          "oklch(38% 0.03 245)",
+          "oklch(50% 0.03 245)",
+          "oklch(62% 0.03 245)",
+          "oklch(74% 0.03 245)",
+          "oklch(86% 0.03 245)",
+          "oklch(95% 0.03 245)"
+        ]
+      },
+      "night-raised": {
+        "role": "neutral",
+        "displayName": "Night Raised",
+        "tonalRamp": [
+          "oklch(15% 0.035 240)",
+          "oklch(25% 0.035 240)",
+          "oklch(38% 0.035 240)",
+          "oklch(50% 0.035 240)",
+          "oklch(62% 0.035 240)",
+          "oklch(74% 0.035 240)",
+          "oklch(86% 0.035 240)",
+          "oklch(95% 0.035 240)"
+        ]
+      },
+      "aurora-blue": {
+        "role": "neutral",
+        "displayName": "Aurora Blue",
+        "tonalRamp": [
+          "oklch(15% 0.12 255)",
+          "oklch(25% 0.12 255)",
+          "oklch(38% 0.12 255)",
+          "oklch(50% 0.12 255)",
+          "oklch(62% 0.12 255)",
+          "oklch(74% 0.12 255)",
+          "oklch(86% 0.12 255)",
+          "oklch(95% 0.12 255)"
+        ]
+      },
+      "aurora-teal": {
+        "role": "neutral",
+        "displayName": "Aurora Teal",
+        "tonalRamp": [
+          "oklch(15% 0.09 200)",
+          "oklch(25% 0.09 200)",
+          "oklch(38% 0.09 200)",
+          "oklch(50% 0.09 200)",
+          "oklch(62% 0.09 200)",
+          "oklch(74% 0.09 200)",
+          "oklch(86% 0.09 200)",
+          "oklch(95% 0.09 200)"
+        ]
+      },
+      "signal-teal": {
+        "role": "secondary",
+        "displayName": "Signal Teal",
+        "tonalRamp": [
+          "oklch(15% 0.09 185)",
+          "oklch(25% 0.09 185)",
+          "oklch(38% 0.09 185)",
+          "oklch(50% 0.09 185)",
+          "oklch(62% 0.09 185)",
+          "oklch(74% 0.09 185)",
+          "oklch(86% 0.09 185)",
+          "oklch(95% 0.09 185)"
+        ]
+      },
+      "signal-teal-deep": {
+        "role": "secondary",
+        "displayName": "Signal Teal Deep",
+        "tonalRamp": [
+          "oklch(15% 0.1 180)",
+          "oklch(25% 0.1 180)",
+          "oklch(38% 0.1 180)",
+          "oklch(50% 0.1 180)",
+          "oklch(62% 0.1 180)",
+          "oklch(74% 0.1 180)",
+          "oklch(86% 0.1 180)",
+          "oklch(95% 0.1 180)"
+        ]
+      },
+      "action-blue": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "tonalRamp": [
+          "oklch(15% 0.19 265)",
+          "oklch(25% 0.19 265)",
+          "oklch(38% 0.19 265)",
+          "oklch(50% 0.19 265)",
+          "oklch(62% 0.19 265)",
+          "oklch(74% 0.19 265)",
+          "oklch(86% 0.19 265)",
+          "oklch(95% 0.19 265)"
+        ]
+      },
+      "action-blue-deep": {
+        "role": "primary",
+        "displayName": "Action Blue Deep",
+        "tonalRamp": [
+          "oklch(15% 0.2 265)",
+          "oklch(25% 0.2 265)",
+          "oklch(38% 0.2 265)",
+          "oklch(50% 0.2 265)",
+          "oklch(62% 0.2 265)",
+          "oklch(74% 0.2 265)",
+          "oklch(86% 0.2 265)",
+          "oklch(95% 0.2 265)"
+        ]
+      },
+      "focus-blue": {
+        "role": "primary",
+        "displayName": "Focus Blue",
+        "tonalRamp": [
+          "oklch(15% 0.12 268)",
+          "oklch(25% 0.12 268)",
+          "oklch(38% 0.12 268)",
+          "oklch(50% 0.12 268)",
+          "oklch(62% 0.12 268)",
+          "oklch(74% 0.12 268)",
+          "oklch(86% 0.12 268)",
+          "oklch(95% 0.12 268)"
+        ]
+      },
+      "focus-ring": {
+        "role": "secondary",
+        "displayName": "Focus Ring",
+        "tonalRamp": [
+          "oklch(15% 0.07 200)",
+          "oklch(25% 0.07 200)",
+          "oklch(38% 0.07 200)",
+          "oklch(50% 0.07 200)",
+          "oklch(62% 0.07 200)",
+          "oklch(74% 0.07 200)",
+          "oklch(86% 0.07 200)",
+          "oklch(95% 0.07 200)"
+        ]
+      },
+      "verified-green": {
+        "role": "tertiary",
+        "displayName": "Verified Green",
+        "tonalRamp": [
+          "oklch(15% 0.1 170)",
+          "oklch(25% 0.1 170)",
+          "oklch(38% 0.1 170)",
+          "oklch(50% 0.1 170)",
+          "oklch(62% 0.1 170)",
+          "oklch(74% 0.1 170)",
+          "oklch(86% 0.1 170)",
+          "oklch(95% 0.1 170)"
+        ]
+      },
+      "verified-green-bg": {
+        "role": "tertiary",
+        "displayName": "Verified Green Wash",
+        "tonalRamp": [
+          "oklch(15% 0.03 165)",
+          "oklch(25% 0.03 165)",
+          "oklch(38% 0.03 165)",
+          "oklch(50% 0.03 165)",
+          "oklch(62% 0.03 165)",
+          "oklch(74% 0.03 165)",
+          "oklch(86% 0.03 165)",
+          "oklch(95% 0.03 165)"
+        ]
+      },
+      "real-amber-bg": {
+        "role": "tertiary",
+        "displayName": "Real Amber Wash",
+        "tonalRamp": [
+          "oklch(15% 0.02 80)",
+          "oklch(25% 0.02 80)",
+          "oklch(38% 0.02 80)",
+          "oklch(50% 0.02 80)",
+          "oklch(62% 0.02 80)",
+          "oklch(74% 0.02 80)",
+          "oklch(86% 0.02 80)",
+          "oklch(95% 0.02 80)"
+        ]
+      },
+      "real-amber-line": {
+        "role": "tertiary",
+        "displayName": "Real Amber Line",
+        "tonalRamp": [
+          "oklch(15% 0.04 75)",
+          "oklch(25% 0.04 75)",
+          "oklch(38% 0.04 75)",
+          "oklch(50% 0.04 75)",
+          "oklch(62% 0.04 75)",
+          "oklch(74% 0.04 75)",
+          "oklch(86% 0.04 75)",
+          "oklch(95% 0.04 75)"
+        ]
+      },
+      "real-amber-text": {
+        "role": "tertiary",
+        "displayName": "Real Amber Ink",
+        "tonalRamp": [
+          "oklch(15% 0.05 75)",
+          "oklch(25% 0.05 75)",
+          "oklch(38% 0.05 75)",
+          "oklch(50% 0.05 75)",
+          "oklch(62% 0.05 75)",
+          "oklch(74% 0.05 75)",
+          "oklch(86% 0.05 75)",
+          "oklch(95% 0.05 75)"
+        ]
+      },
+      "alert-rust": {
+        "role": "tertiary",
+        "displayName": "Alert Rust",
+        "tonalRamp": [
+          "oklch(15% 0.14 40)",
+          "oklch(25% 0.14 40)",
+          "oklch(38% 0.14 40)",
+          "oklch(50% 0.14 40)",
+          "oklch(62% 0.14 40)",
+          "oklch(74% 0.14 40)",
+          "oklch(86% 0.14 40)",
+          "oklch(95% 0.14 40)"
+        ]
+      },
+      "alert-rust-bg": {
+        "role": "tertiary",
+        "displayName": "Alert Rust Wash",
+        "tonalRamp": [
+          "oklch(15% 0.02 40)",
+          "oklch(25% 0.02 40)",
+          "oklch(38% 0.02 40)",
+          "oklch(50% 0.02 40)",
+          "oklch(62% 0.02 40)",
+          "oklch(74% 0.02 40)",
+          "oklch(86% 0.02 40)",
+          "oklch(95% 0.02 40)"
+        ]
+      },
+      "code-mint-bg": {
+        "role": "tertiary",
+        "displayName": "Code Mint",
+        "tonalRamp": [
+          "oklch(15% 0.015 185)",
+          "oklch(25% 0.015 185)",
+          "oklch(38% 0.015 185)",
+          "oklch(50% 0.015 185)",
+          "oklch(62% 0.015 185)",
+          "oklch(74% 0.015 185)",
+          "oklch(86% 0.015 185)",
+          "oklch(95% 0.015 185)"
+        ]
+      },
+      "code-mint-line": {
+        "role": "tertiary",
+        "displayName": "Code Mint Line",
+        "tonalRamp": [
+          "oklch(15% 0.04 185)",
+          "oklch(25% 0.04 185)",
+          "oklch(38% 0.04 185)",
+          "oklch(50% 0.04 185)",
+          "oklch(62% 0.04 185)",
+          "oklch(74% 0.04 185)",
+          "oklch(86% 0.04 185)",
+          "oklch(95% 0.04 185)"
+        ]
+      },
+      "code-ink": {
+        "role": "tertiary",
+        "displayName": "Code Ink",
+        "tonalRamp": [
+          "oklch(15% 0.05 200)",
+          "oklch(25% 0.05 200)",
+          "oklch(38% 0.05 200)",
+          "oklch(50% 0.05 200)",
+          "oklch(62% 0.05 200)",
+          "oklch(74% 0.05 200)",
+          "oklch(86% 0.05 200)",
+          "oklch(95% 0.05 200)"
+        ]
+      },
+      "headline-on-night": {
+        "role": "neutral",
+        "displayName": "Headline on Night",
+        "tonalRamp": [
+          "oklch(15% 0.005 220)",
+          "oklch(25% 0.005 220)",
+          "oklch(38% 0.005 220)",
+          "oklch(50% 0.005 220)",
+          "oklch(62% 0.005 220)",
+          "oklch(74% 0.005 220)",
+          "oklch(86% 0.005 220)",
+          "oklch(95% 0.005 220)"
+        ]
+      },
+      "body-on-night": {
+        "role": "neutral",
+        "displayName": "Body on Night",
+        "tonalRamp": [
+          "oklch(15% 0.02 225)",
+          "oklch(25% 0.02 225)",
+          "oklch(38% 0.02 225)",
+          "oklch(50% 0.02 225)",
+          "oklch(62% 0.02 225)",
+          "oklch(74% 0.02 225)",
+          "oklch(86% 0.02 225)",
+          "oklch(95% 0.02 225)"
+        ]
+      },
+      "muted-on-night": {
+        "role": "neutral",
+        "displayName": "Muted on Night",
+        "tonalRamp": [
+          "oklch(15% 0.02 225)",
+          "oklch(25% 0.02 225)",
+          "oklch(38% 0.02 225)",
+          "oklch(50% 0.02 225)",
+          "oklch(62% 0.02 225)",
+          "oklch(74% 0.02 225)",
+          "oklch(86% 0.02 225)",
+          "oklch(95% 0.02 225)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0.03 235)",
+          "oklch(25% 0.03 235)",
+          "oklch(38% 0.03 235)",
+          "oklch(50% 0.03 235)",
+          "oklch(62% 0.03 235)",
+          "oklch(74% 0.03 235)",
+          "oklch(86% 0.03 235)",
+          "oklch(95% 0.03 235)"
+        ]
+      },
+      "ink-body": {
+        "role": "neutral",
+        "displayName": "Ink Body",
+        "tonalRamp": [
+          "oklch(15% 0.03 235)",
+          "oklch(25% 0.03 235)",
+          "oklch(38% 0.03 235)",
+          "oklch(50% 0.03 235)",
+          "oklch(62% 0.03 235)",
+          "oklch(74% 0.03 235)",
+          "oklch(86% 0.03 235)",
+          "oklch(95% 0.03 235)"
+        ]
+      },
+      "slate": {
+        "role": "neutral",
+        "displayName": "Slate",
+        "tonalRamp": [
+          "oklch(15% 0.02 225)",
+          "oklch(25% 0.02 225)",
+          "oklch(38% 0.02 225)",
+          "oklch(50% 0.02 225)",
+          "oklch(62% 0.02 225)",
+          "oklch(74% 0.02 225)",
+          "oklch(86% 0.02 225)",
+          "oklch(95% 0.02 225)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.015 225)",
+          "oklch(25% 0.015 225)",
+          "oklch(38% 0.015 225)",
+          "oklch(50% 0.015 225)",
+          "oklch(62% 0.015 225)",
+          "oklch(74% 0.015 225)",
+          "oklch(86% 0.015 225)",
+          "oklch(95% 0.015 225)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "oklch(15% 0.005 220)",
+          "oklch(25% 0.005 220)",
+          "oklch(38% 0.005 220)",
+          "oklch(50% 0.005 220)",
+          "oklch(62% 0.005 220)",
+          "oklch(74% 0.005 220)",
+          "oklch(86% 0.005 220)",
+          "oklch(95% 0.005 220)"
+        ]
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "Soft",
+        "tonalRamp": [
+          "oklch(15% 0.004 230)",
+          "oklch(25% 0.004 230)",
+          "oklch(38% 0.004 230)",
+          "oklch(50% 0.004 230)",
+          "oklch(62% 0.004 230)",
+          "oklch(74% 0.004 230)",
+          "oklch(86% 0.004 230)",
+          "oklch(95% 0.004 230)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(25% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(50% 0 0)",
+          "oklch(62% 0 0)",
+          "oklch(74% 0 0)",
+          "oklch(86% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Landing heading on the night."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Stage heading and result states."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card, guide and admin headings."
+      },
+      "title-s": {
+        "displayName": "Title S",
+        "purpose": "TAP panel and guide slide headings."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Result copy, landing intro, all form fields (16px, no iOS zoom)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Instructions, side caption, real-TAP notice."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Secondary and text buttons."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Help text, tips, footnotes."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Step rail, badges, pills; tabular numerals."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase tracked eyebrows and field labels."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "TAP value and reference codes, JetBrains Mono."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-lift",
+        "value": "0 26px 85px rgba(0,0,0,.25), 0 3px 8px rgba(0,0,0,.05)",
+        "purpose": "Recovery/admin card over the night."
+      },
+      {
+        "name": "action",
+        "value": "0 5px 13px rgba(51,110,232,.18)",
+        "purpose": "Primary button only."
+      },
+      {
+        "name": "float",
+        "value": "0 12px 30px rgba(16,37,51,.14)",
+        "purpose": "Dropdowns floating over content."
+      },
+      {
+        "name": "device",
+        "value": "0 19px 38px rgba(34,66,79,.2)",
+        "purpose": "Phone/browser mockups in the guide."
+      },
+      {
+        "name": "focus-field",
+        "value": "0 0 0 3px rgba(62,117,246,.1)",
+        "purpose": "Field focus ring, with focus-blue border."
+      }
+    ],
+    "motion": [
+      {
+        "name": "drift",
+        "value": "18s / 21s ease-in-out infinite alternate",
+        "purpose": "Aurora fields in the night background."
+      },
+      {
+        "name": "button-lift",
+        "value": "transform .18s, filter .18s",
+        "purpose": "Primary button hover lift."
+      },
+      {
+        "name": "field-focus",
+        "value": "border-color .2s, box-shadow .2s",
+        "purpose": "Field focus transition."
+      },
+      {
+        "name": "slide-in",
+        "value": ".28s ease",
+        "purpose": "Guide slides enter from the right (12px)."
+      },
+      {
+        "name": "countdown",
+        "value": "width 1s linear",
+        "purpose": "TAP expiry bar."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all animation/transition ≈0",
+        "purpose": "prefers-reduced-motion disables everything."
+      },
+      {
+        "name": "identity-scan",
+        "value": "1.15s .2s cubic-bezier(.6,0,.3,1)",
+        "purpose": "Landing beam + mask reveal of the headline via @property --scan."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1050px"
+      },
+      {
+        "name": "tablet",
+        "value": "940px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "small",
+        "value": "410px"
+      },
+      {
+        "name": "tiny",
+        "value": "380px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single blue action on a surface; label left, arrow right.",
+      "html": "<button class=\"ds-btn-primary\">Fortsett med Vipps <span aria-hidden=\"true\">→</span></button>",
+      "css": ".ds-btn-primary{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;display:flex;width:320px;height:54px;align-items:center;justify-content:space-between;padding:0 16px;border:0;border-radius:10px;background:linear-gradient(100deg,#2868ef,#3979f7);box-shadow:0 5px 13px rgba(51,110,232,.18);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:transform .18s,filter .18s}.ds-btn-primary span{font-size:20px;font-weight:400}.ds-btn-primary:hover{filter:brightness(1.05);transform:translateY(-1px)}.ds-btn-primary:focus-visible{outline:3px solid #77c9cf;outline-offset:3px}.ds-btn-primary:disabled{opacity:.52;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "White, thin border; copy, previous, reject.",
+      "html": "<button class=\"ds-btn-secondary\">Kopier engangskode</button>",
+      "css": ".ds-btn-secondary{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;height:43px;padding:0 18px;border:1px solid #dfe8e8;border-radius:9px;background:#fff;color:#47616a;font-size:12px;font-weight:600;cursor:pointer}.ds-btn-secondary:hover{background:#f7fbfa}.ds-btn-secondary:focus-visible{outline:3px solid #77c9cf;outline-offset:3px}"
+    },
+    {
+      "name": "Approve Button",
+      "kind": "button",
+      "refersTo": "button-approve",
+      "description": "Green simulation approve control, the only colored secondary.",
+      "html": "<button class=\"ds-btn-approve\">Simuler godkjenning</button>",
+      "css": ".ds-btn-approve{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;width:280px;height:43px;border:1px solid #c5e5da;border-radius:7px;background:#eef9f4;color:#18785e;font-size:12px;font-weight:600;cursor:pointer}.ds-btn-approve:hover{background:#e2f5ed}.ds-btn-approve:focus-visible{outline:3px solid #77c9cf;outline-offset:3px}"
+    },
+    {
+      "name": "Phone Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Tall field with fixed +47 prefix and blue focus ring.",
+      "html": "<label class=\"ds-label\">MOBILNUMMER</label><div class=\"ds-phone\"><span class=\"ds-prefix\">+47</span><i></i><input placeholder=\"412 34 567\" inputmode=\"tel\"></div>",
+      "css": ".ds-label{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;display:block;margin-bottom:10px;color:#53636d;font-size:11px;font-weight:700;letter-spacing:.1em}.ds-phone{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;display:flex;width:320px;height:55px;align-items:center;padding-left:16px;border:1px solid #dfe5e8;border-radius:10px;background:#fff;transition:border-color .2s,box-shadow .2s}.ds-phone:focus-within{border-color:#85a7f7;box-shadow:0 0 0 3px rgba(62,117,246,.1)}.ds-prefix{color:#526570;font-size:16px}.ds-phone i{width:1px;height:19px;margin:0 12px;background:#e5e9eb}.ds-phone input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;color:#1b2a36;font:inherit;font-size:16px}"
+    },
+    {
+      "name": "Step Rail",
+      "kind": "nav",
+      "description": "Numbered step circles on the night background.",
+      "html": "<div class=\"ds-rail\"><span class=\"done\"><i>1</i>Nummer</span><b></b><span class=\"active\"><i>2</i>Vipps</span><b></b><span><i>3</i>Engangskode</span></div>",
+      "css": ".ds-rail{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;display:flex;align-items:center;gap:12px;padding:16px;background:#07131f;color:#81949d;font-size:12px}.ds-rail span{display:flex;align-items:center;gap:7px}.ds-rail i{display:grid;width:22px;height:22px;place-items:center;border:1px solid rgba(187,211,216,.24);border-radius:50%;font-style:normal;font-size:11px}.ds-rail .active{color:#b8f0eb}.ds-rail .active i{border-color:#6dcac5;background:rgba(95,199,195,.13)}.ds-rail .done i{border-color:rgba(105,194,185,.45);color:#a9d9d5}.ds-rail b{width:30px;height:1px;background:rgba(188,212,218,.18)}"
+    },
+    {
+      "name": "Live Pill",
+      "kind": "chip",
+      "refersTo": "live-pill",
+      "description": "Green status pill on the TAP panel.",
+      "html": "<span class=\"ds-pill\"><i></i> Aktiv</span>",
+      "css": ".ds-pill{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;display:inline-flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid #d8eee5;border-radius:99px;background:#f3fbf7;color:#387b65;font-size:11px;font-weight:700}.ds-pill i{width:6px;height:6px;border-radius:50%;background:#38aa83;box-shadow:0 0 0 3px rgba(56,170,131,.12)}"
+    },
+    {
+      "name": "Recovery Card",
+      "kind": "card",
+      "refersTo": "recovery-card",
+      "description": "The lit work surface on the night desk.",
+      "html": "<div class=\"ds-night\"><div class=\"ds-card\"><small>KONTOGJENOPPRETTING · STEG 1</small><h2>Skriv inn nummeret du bruker i Vipps</h2><p>Vi sender en forespørsel til Vipps-appen din.</p></div></div>",
+      "css": ".ds-night{padding:32px;background:radial-gradient(ellipse at 20% 22%,rgba(42,103,131,.29),transparent 43%),linear-gradient(132deg,#07131f 0%,#0a1c2b 48%,#07131f 100%)}.ds-card{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;max-width:420px;padding:30px;border:1px solid rgba(238,243,246,.95);border-radius:22px;background:rgba(255,255,255,.985);box-shadow:0 26px 85px rgba(0,0,0,.25),0 3px 8px rgba(0,0,0,.05)}.ds-card small{color:#74858e;font-size:11px;font-weight:700;letter-spacing:.16em}.ds-card h2{margin:8px 0 0;color:#142431;font-size:24px;font-weight:700;letter-spacing:-.045em}.ds-card p{margin:12px 0 0;color:#667781;font-size:14px;line-height:1.7}"
+    },
+    {
+      "name": "Real TAP Notice",
+      "kind": "custom",
+      "refersTo": "real-tap-notice",
+      "description": "Amber notice: this creates a real sign-in code.",
+      "html": "<div class=\"ds-real\"><span>!</span><p><strong>Dette er en ekte kode.</strong> Den kan brukes til å logge inn på kontoen din.</p></div>",
+      "css": ".ds-real{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;display:flex;gap:10px;max-width:420px;padding:13px;border:1px solid #f0e2cf;border-radius:8px;background:#fffaf2;color:#7e6747}.ds-real span{display:grid;width:17px;height:17px;flex:none;place-items:center;border-radius:50%;background:#f7e8d1;color:#966427;font-size:11px;font-weight:700}.ds-real p{margin:0;font-size:12px;line-height:1.55}"
+    },
+    {
+      "name": "TAP Code",
+      "kind": "custom",
+      "refersTo": "tap-code",
+      "description": "Signature: the one-time code, dashed mint ticket with countdown.",
+      "html": "<div class=\"ds-tap\"><div class=\"ds-code\">K7Q2-XM9P</div><div class=\"ds-exp\"><span>Utløper om</span><strong>59:12</strong></div><div class=\"ds-track\"><span></span></div></div>",
+      "css": ".ds-tap{font-family:Nunito Sans,'Avenir Next','Segoe UI',system-ui,sans-serif;width:320px}.ds-code{font-family:\"JetBrains Mono\",ui-monospace,Menlo,monospace;font-variant-ligatures:none;padding:22px 10px;border:1px dashed #afd2ce;border-radius:12px;background:#f1faf8;color:#173f45;font-size:26px;font-weight:700;letter-spacing:.08em;text-align:center}.ds-exp{display:flex;justify-content:space-between;margin-top:16px;color:#71808a;font-size:12px}.ds-exp strong{color:#344952;font-size:13px;font-variant-numeric:tabular-nums}.ds-track{height:4px;margin-top:8px;border-radius:4px;background:#ebf0f1;overflow:hidden}.ds-track span{display:block;width:82%;height:100%;border-radius:4px;background:linear-gradient(90deg,#42b7a8,#77cfba)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Night Desk",
+    "overview": "idcheck is a calm control room after hours. The whole screen is a deep navy night (`night`), barely moving: two blurred aurora fields drift slowly behind a faint 72px grid that fades out at the edges. In front of it there is one bright, white work surface: the recovery card. Everything that matters happens on that surface; the night around it only exists to keep the user steady and focused. The user arrives locked out and stressed, and the room says: one thing at a time, here.\n\nOn the surface the tone is **crisp and confident**: a clear blue primary action, strong ink-on-white contrast, decisive headings with tight negative tracking, and neat, gently rounded fields. Color has a job. Blue means \"do this\", green means \"verified\", amber means \"this is real\", teal is the signal light on the night side. Decoration (aurora, glow, the orbit around the shield) belongs to the night and the side illustration, never to the controls.\n\nType sizes come from one token scale on `:root`; new screens use those tokens and respect the minimum sizes in Typography.",
+    "keyCharacteristics": [
+      "A dark, near-still navy backdrop with one bright work surface in front.",
+      "Exactly one blue primary action per surface; secondary actions are white with a thin border.",
+      "Uppercase, widely tracked eyebrow labels in teal (on night) or grey (on paper) that name the step.",
+      "Status colors are semantic and restrained: green verified, amber \"real TAP\", rust error.",
+      "The TAP code is the only large monospace element on screen: it is the moment's most important object, and every character must be unambiguous.",
+      "Responsive from 380px, mobile first: the card loses its frame on phones and the flow becomes one column."
+    ],
+    "rules": [
+      {
+        "name": "The One Lamp Rule",
+        "body": "Each surface has exactly one Action Blue element. If two things are blue, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Amber Means Real Rule",
+        "body": "Amber is used only where something is real and consequential (a real TAP, a real setup error). Never for decoration or neutral info.",
+        "section": "colors"
+      },
+      {
+        "name": "The Night Is Not a Surface Rule",
+        "body": "Forms, codes and choices are never placed directly on the night. They sit on paper. The night carries only headings, eyebrows, the step rail and the brand.",
+        "section": "colors"
+      },
+      {
+        "name": "The Readable Floor Rule",
+        "body": "No readable text under 12px (Meta), and no uppercase label under 11px (Label). Only the miniature phone and browser mockups in the guide, which are illustrations, may go below.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tight Head, Wide Label Rule",
+        "body": "Headings are negatively tracked (−0.02 to −0.035em, never tighter); uppercase labels are positively tracked (0.14em). Never the other way round, and never untracked uppercase.",
+        "section": "typography"
+      },
+      {
+        "name": "The Exact Characters Rule",
+        "body": "Anything the user must read back or type exactly (TAP, reference) is set in JetBrains Mono with ligatures off. Mono is never used as decoration elsewhere.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "Inside the work surface everything is flat at rest. A new shadow on paper requires the element to actually float over other content.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep the night calm: aurora at ≤17% opacity, drift of 18–21s, and stop all motion under `prefers-reduced-motion`.",
+      "**Do** keep the Identity Scan as the only choreographed moment; other screens use state transitions, not entrances.",
+      "**Do** put all interaction on paper and name each step with a tracked uppercase eyebrow.",
+      "**Do** use exactly one Action Blue button per surface, with the arrow on the right.",
+      "**Do** show the amber real-TAP warning before issuing, and make it visible that Vipps is simulated. (The old `demo-note` marking is hidden with `display:none` today; PRODUCT.md requires the marking, so new screens should show it.)",
+      "**Do** give the TAP code its own dashed mint box with countdown and progress bar, and nothing else in the same visual tier.",
+      "**Do** design mobile first and verify at 380px and 760px."
+    ],
+    "donts": [
+      "**Don't** set font sizes directly on components; use the `--text-*` tokens, and stay above The Readable Floor Rule.",
+      "**Don't** place forms, codes or choices directly on the navy background.",
+      "**Don't** use amber for anything other than \"this is real / consequential\".",
+      "**Don't** add shadows to elements on paper that don't actually float.",
+      "**Don't** color the generic error state as an alarm; rust is reserved for the small icon, and the text stays neutral and identical for every rejection.",
+      "**Don't** use Microsoft, Vipps or BankID colors outside their own marks and the guide mockups."
+    ]
+  }
+}
